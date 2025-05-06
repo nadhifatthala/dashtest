@@ -1,0 +1,76 @@
+/* Container untuk semua kartu */
+.card-container {
+  
+    display: flex;
+    flex-direction: column; /* Susunan vertikal untuk semua kartu */
+    gap: 20px; /* Jarak antar kartu */
+    position: relative;
+    right:220px;
+    margin: 20px;
+  }
+  .card-link {
+    text-decoration: none; /* Menghilangkan garis bawah pada link */
+    color: inherit; /* Mempertahankan warna teks dari elemen dalam card */
+    display: block; /* Membuat card sepenuhnya klikable */
+  }
+  
+  
+  /* Gaya dasar untuk setiap kartu */
+  .card {
+    position: relative; /* Untuk memposisikan elemen konten di atas gambar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px; /* Sudut melengkung */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Bayangan lebih tebal */
+    overflow: hidden; /* Agar elemen tidak keluar dari kartu */
+    height: 150px; /* Tinggi kartu */
+    width: 180%; /* Lebar kartu */
+    transition: transform 0.3s, box-shadow 0.3s; /* Animasi saat hover */
+}
+
+.card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Gambar memenuhi lebar kartu */
+    height: 100%; /* Gambar memenuhi tinggi kartu */
+    object-fit: cover; /* Sesuaikan gambar agar tetap proporsional */
+}
+.card:hover {
+  transform: scale(1.10); /* Perbesar sedikit saat di-hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Tingkatkan bayangan */
+}
+
+/* Konten kartu */
+/* Konten kartu */
+.card-content {
+  position: relative;
+  z-index: 2; /* Letakkan konten di atas gambar */
+  color: rgb(0, 0, 0); /* Warna teks */
+  background: rgba(235, 235, 235, 0.9); /* Latar belakang semi-transparan */
+  padding: 20px; /* Tambahkan ruang di sekitar teks */
+  right: -80px; /* Sesuaikan posisi */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Efek bayangan lebih besar */
+  border-radius: 10px; /* Perbesar sedikit sudut melengkung */
+  text-align: center;
+  width: 30%; /* Perbesar lebar */
+  transform: scale(1.1); /* Perbesar keseluruhan */
+  font-size: 12px; /* Perkecil ukuran teks */
+  line-height: 1.4; /* Sesuaikan jarak antar baris */
+}
+
+
+.card-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.card-description {
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+  
+  

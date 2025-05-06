@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Swasembada Pangan Pangan Jawa Timur</title>
+    <link rel="icon" type="image/png" sizes="48x48" href="image/logo3.jpg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style-peta.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.0/dist/leaflet-search.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo-title">
+                <img src="image/Reg I Primary without Text.png" alt="Logo" class="logo">
+                <h1>Direktorat Regional I | <span class="non-bold">Kementerian PPN/Bappenas</span></h1>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Beranda</a></li>
+                    <li><a href="tentang.html">Tentang</a></li>
+                    <li><a href="kontak.html">Kontak</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <div id="layerPanel" class="layer-panel">
+        <div id="layerContent"></div>
+    </div>
+    <div id="map">
+        <div class="legend">
+            <h4>Legenda Peta</h4>
+            <div class="legend-item">
+                <span class="color-circle low"></span> <span>Stunting Rendah</span>
+            </div>
+            <div class="legend-item">
+                <span class="color-circle medium"></span> <span>Stunting Sedang</span>
+            </div>
+            <div class="legend-item">
+                <span class="color-circle high"></span> <span>Stunting Tinggi</span>
+            </div>
+            <div class="legend-item">
+                <span class="color-box"></span> <span>Batas Wilayah</span>
+            </div>
+        </div>
+        
+    </div>
+    </section>
+    
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-search@3.0.0/dist/leaflet-search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+    <script src="js/peta.js"></script>
+    
+    <!-- <script>
+        const ctx = document.getElementById('stuntingChart').getContext('2d');
+        const stuntingChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Kabupaten A', 'Kabupaten B', 'Kabupaten C', 'Kabupaten D', 'Kabupaten E'],
+                datasets: [{
+                    label: 'Persentase Stunting',
+                    data: [20, 35, 40, 25, 30],
+                    backgroundColor: ['#4CAF50', '#FFC107', '#F44336', '#2196F3', '#9C27B0']
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script> -->
+</body>
+</html>

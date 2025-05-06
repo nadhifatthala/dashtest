@@ -1,0 +1,309 @@
+/* Header */
+.container {
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    position: sticky;
+    top: 0;
+    border-radius: 10px;
+    background-color: #ffffff; /* Warna biru untuk header */
+    color: rgb(0, 0, 0);
+    z-index: 1000;
+    padding: 0.2rem 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Container Header */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem; /*jarak menu semua */
+}
+
+.non-bold {
+    font-weight: normal; /* Hilangkan bold */
+    font-size: 1.2rem; /* Ukuran font lebih kecil */
+}
+
+/* Logo dan Judul */
+.logo-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo {
+    width: 50px; /* Ukuran logo */
+    height: 50px;
+    border-radius: 50%;
+}
+
+.logo-title h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: bold;
+}
+
+/* Navigasi */
+nav {
+    flex-grow: 1;
+    text-align: right;
+    display: flex;  /* Ensure the nav is a flex container */
+    justify-content: flex-end;  /* Align the items to the right */
+      /* Optional: Add some padding to the right edge */
+}
+
+.nav-menu {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-menu li {
+    display: inline-block;
+}
+
+.nav-menu a {
+    text-decoration: none;
+    color: #000000;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    border-radius: 5px; /* For hover effect */
+    font-weight: normal; /* Default weight */
+}
+
+/* Animasi Hover */
+.nav-menu a:hover {
+    /* background-color: #007bff; */
+    color: #000000;
+    font-weight: bold; /* Jadikan teks bold */
+    transform: scale(1.1); /* Membesar sedikit */
+}
+
+/* Hamburger Menu */
+.menu-icon {
+    display: none; /* Default: disembunyikan */
+    flex-direction: column;
+    cursor: pointer;
+    gap: 5px;
+    
+    position: absolute; /* Pastikan posisinya absolute agar tetap di tempat */
+    right: 1rem; /* Berada di pinggir kanan layar */
+    top: 40%; /* Atur jarak vertikal jika diperlukan */
+    transform: translateY(-1%); /* Untuk memposisikannya tepat di tengah secara vertikal */
+}
+
+.menu-icon span {
+    background-color: white;
+    height: 3px;
+    width: 25px;
+    transition: all 0.3s ease;
+}
+
+
+/* Hero Section */
+#hero-section {
+    background-color: #f7f9fc;
+    padding: 1.3rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 81vh;
+    background-image: url('image/vecteezy_rice-field-landscape-aerial-view_34581508.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: left 90%; /* Gambar lebih ke bawah */
+    border-radius: 15px;
+}
+
+#hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 22%; /* Hanya bagian atas */
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+    z-index: 1; /* Pastikan ini berada di atas gambar */
+    border-radius: 15px 15px 0 0; /* Hanya sudut atas */
+}
+/* Animasi Hero Section */
+#hero-section {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+/* Animasi Hero Section */
+#hero-section.animate-hero {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hero-container {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: left;
+}
+
+.hero-text {
+    flex: 1;
+    max-width: 600px;
+}
+
+.hero-text h1 {
+    font-size: 5.3rem;
+    margin-bottom: 0rem;
+    margin-left: 4rem;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.hero-text p {
+    font-size: 1.5rem;
+    color: #ffffff;
+    margin-left: 4rem;
+    text-align: justify;
+}
+
+.hero-text p:first-of-type {
+    margin-top: -5px;
+}
+
+
+/* #cta-button {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    text-align: center;
+}
+
+#cta-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.font {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #007bff;
+    font-weight: bold;
+}
+
+/* Hero Illustration */
+/* .hero-illustration {
+    flex: 1;
+    max-width: 600px;
+    display: flex;
+    justify-content: center;
+}
+
+.hero-illustration img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    transition: transform 0.3s;
+}
+
+.hero-illustration img:hover {
+    transform: scale(1.05);
+} */ 
+
+
+
+/* Responsivitas */
+/* @media (max-width: 768px) {
+    .logo-title h1 {
+        font-size: 1.2rem;
+    }
+
+    .nav-menu {
+        gap: 1rem;
+    }
+
+    .nav-menu a {
+        font-size: 0.9rem;
+    }
+} */
+
+ /* Responsivitas */
+@media (max-width: 768px) {
+    .logo-title h1 {
+        font-size: 1.2rem;
+    }
+
+    .nav-menu {
+        display: none; /* Sembunyikan menu */
+        flex-direction: column;
+        gap: 1rem;
+        position: absolute;
+        top: 100%; /* Di bawah header */
+        right: 0;
+        background-color: #007bff;
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-menu.active {
+        display: flex; /* Tampilkan menu saat aktif */
+    }
+
+    .nav-menu li {
+        text-align: center;
+    }
+
+    .nav-menu a {
+        font-size: 1rem;
+        padding: 0.5rem;
+    }
+
+    .menu-icon {
+        display: flex; /* Tampilkan ikon menu */
+
+    }
+
+    /* Animasi untuk ikon menu */
+    .menu-icon.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .menu-icon.active span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .menu-icon.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+}
+
+
+/* Responsivitas */
+@media (max-width: 768px) {
+    .hero-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .hero-text h1 {
+        font-size: 2rem;
+    }
+    .hero-text p {
+        font-size: 1rem;
+    }
+}

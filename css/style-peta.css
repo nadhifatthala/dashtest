@@ -1,0 +1,273 @@
+/* Styling untuk Panel */
+.layer-panel {
+    position: fixed;
+    top: 150px;
+    right: 20px;
+    width: 300px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    z-index: 1000;
+    overflow-y: auto;
+    max-height: 500px;
+    border-left: 5px solid #007bff;
+    font-family: Arial, sans-serif;
+}
+
+/* Header Panel */
+.layer-panel h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+.layer-panel p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+/* Styling Kategori */
+.category {
+    background: #f8f9fa;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Tanda Plus/Munis & Label Kategori */
+.category-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-weight: bold;
+}
+
+/* Tombol Plus/Minus */
+.toggle-button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #007bff;
+    margin-right: 8px;
+    transition: transform 0.2s;
+}
+
+.toggle-button:hover {
+    transform: scale(1.2);
+    color: #0056b3;
+}
+
+/* Efek Hover Kategori */
+.category:hover {
+    background: #eaeaea;
+}
+
+/* Isi Kategori */
+/* .items {
+    margin-top: 5px;
+    margin-left: 25px;
+    font-size: 14px;
+    padding-left: 10px;
+    display: none;
+    color: #555;
+    transition: all 0.3s ease-in-out;
+} */
+/* Styling untuk daftar isi kategori */
+.items {
+    margin-top: 5px;
+    margin-left: 25px;
+    font-size: 14px;
+    padding: 8px 12px;
+    display: none;
+    color: #555;
+    background: #ffffff;
+    border-left: 3px solid #007bff;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Item List */
+.items div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* Ikon sebelum teks */
+.items div::before {
+    content: "📌";
+    font-size: 14px;
+    color: #007bff;
+}
+
+/* Menghapus border bawah pada item terakhir */
+.items div:last-child {
+    border-bottom: none;
+}
+
+
+/* Tombol Close */
+button.close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #777;
+    transition: color 0.3s;
+}
+
+button.close-btn:hover {
+    color: #333;
+}
+
+
+
+#map {
+    width: 100%;
+    height: 644px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.leaflet-control-search {
+    background-color: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    justify-content: flex-end;  /* Align the items to the right */
+    z-index: 1000;
+    
+}
+
+/* .search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ccc;
+} */
+
+/* .search-results li {
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.search-results li:hover {
+    background-color: #f1f1f1;
+} */
+
+.custom-zoom {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.custom-zoom button {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.custom-zoom button:hover {
+    background-color: #0056b3;
+}
+
+/* Styling untuk legenda peta */
+.legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.504);
+    padding: 12px 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    z-index: 1000;
+    max-width: 200px; /* Agar tidak terlalu lebar */
+}
+
+/* Styling judul legenda */
+.legend h4 {
+    margin: 0 0 12px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 6px;
+}
+
+/* Tata letak lebih rapi menggunakan flexbox */
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+/* Simbol warna untuk legenda */
+.legend .color-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid #333; /* Tambahkan border agar lebih jelas */
+}
+
+/* Warna untuk setiap kategori */
+.legend .low {
+    background: green;
+}
+.legend .medium {
+    background: orange;
+}
+.legend .high {
+    background: red;
+}
+
+/* Kotak untuk batas wilayah */
+.legend .color-box {
+    width: 25px;
+    height: 6px;
+    background: white; /* Ubah menjadi putih */
+    border-radius: 3px;
+    box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.4); /* Tambahkan efek shadow */
+    border: 1px solid rgba(0, 0, 0, 0.5); /* Tambahkan border tipis agar lebih tegas */
+}
+
+
+
+
+/* Warna indikator stunting */
+.low { background: green; }
+.medium { background: orange; }
+.high { background: red; }
+
+/* Marker */
+.marker { background: blue; }
+
+/* Garis batas wilayah */
+.boundary {
+    width: 20px;
+    height: 5px;
+    background: white;
+    margin-right: 8px;
+}
