@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grafik Indikator Kesejahteraan</title>
+  <link rel="stylesheet" href="css/style-tren.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+          <div class="header-container">
+              <!-- Logo dan Judul -->
+              <div class="logo-title">
+                  <img src="image/Reg I Primary without Text.png" alt="Logo" class="logo">
+                  <h1>Direktorat Regional I | <span class="non-bold">Kementerian PPN/Bappenas</span></h1>
+              </div>
+      
+              <!-- Navigasi -->
+              <nav>
+                  <ul class="nav-menu" >
+                      <li ><a href="index.html">Beranda</a></li>
+                      <li><a href="tentang.html">Tentang</a></li>
+                      <!-- <li><a href="#tableau-dashboard">Dashboard</a></li> -->
+                      <!-- <li><a href="peta.html">Peta</a></li> -->
+                      <li><a href="kontak.html">Kontak</a></li>
+                      <li><a href="tren.html">Indikator</a></li>
+                  </ul>
+              </nav>
+          </div>
+      </header>
+  <div class="legend-header">
+    <h3>KARTU SKOR DIAGNOSIS DAN PENGAMBILAN KEPUTUSAN</h3>
+    <div class="legend">
+      <span><span class="box green"></span>Area yang Kemungkinan Kecil Menjadi Tantangan</span>
+      <span><span class="box yellow"></span>Area Tantangan Potensial</span>
+      <span><span class="box red"></span>Area yang Kemungkinan Besar Menjadi Tantangan</span>
+      <span><span class="box gray"></span>Data Tidak Tersedia</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <aside class="sidebar">
+      <div id="location-selector-wrapper">
+        <label for="location-selector">Pilih Wilayah:</label>
+        <select id="location-selector">
+            <option value="">Memuat data...</option>
+            <!-- Options will be populated by JavaScript -->
+        </select>
+        </div>
+        <ul id="indicator-nav">
+          <li onclick="scrollToSection('indikator-gizi')">PREVALENSI KEKURANGAN GIZI</li>
+          <li onclick="scrollToSection('indikator-stunting')">STUNTING PADA ANAK DIBAWAH 5 TAHUN</li>
+          <li onclick="scrollToSection('indikator-harapan-hidup')">ANGKA HARAPAN HIDUP PADA SAAT LAHIR</li>
+          <li onclick="scrollToSection('indikator-indeks-gini')">INDEKS GINI (BANK DUNIA)</li>
+          <li onclick="scrollToSection('indikator-penduduk-miskin')">RASIO PENDUDUK MISKIN</li>
+          <li onclick="scrollToSection('indikator-kelasifikasi')">KELASIFIKASI PENDAPATAN</li>
+        </ul>
+    </aside>
+      
+    <main class="content">
+        <h2>Indikator</h2>
+      
+        <div id="indikator-gizi" class="chart-card">
+          <div class="chart-header">
+            <h3 id="title-gizi">Prevalensi Kekurangan Gizi <span>(Persen)</span></h3>
+            <p>Hasil > Asupan Pangan</p>
+          </div>
+          <canvas id="chart-gizi"></canvas>
+          <p class="sumber"><strong>SUMBER :</strong> BPS - Susenas Konsumsi dan Pengeluaran</p>
+          <div class="desc">
+            <div>
+              <h4>PENGERTIAN</h4>
+              <p>Perkiraan proporsi penduduk yang berkekurangan energi makanan untuk hidup sehat dan aktif.</p>
+            </div>
+            <div>
+              <h4>RELEVANSI</h4>
+              <p>Indikator untuk memantau kelaparan global dan regional berdasarkan distribusi konsumsi makanan.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="indikator-stunting" class="chart-card">
+            <div class="chart-header">
+              <h3 id="title-stunting">Stunting Pada Anak Dibawah 5 Tahun <span>(Persen)</span></h3>
+              <p>Hasil > Status Gizi</p>
+            </div>
+            <canvas id="chart-stunting"></canvas>
+            <p class="sumber"><strong>SUMBER :</strong> Kementerian Kesehatan (Ministry of Health) - Riskesdas/SSGI/SSGBI</p>
+            <div class="desc">
+              <div>
+                <h4>PENGERTIAN</h4>
+                <p>Persentase anak usia 0–59 bulan yang lebih dari 2 standar penyimpangan di bawah median tinggi badan menurut usia Pertumbuhan Anak WHO Standar. Data regional, jika dipilah, didasarkan pada rata-rata populasi tertimbang dari semua negara konstituen dengan data yang tersedia..</p>
+              </div>
+              <div>
+                <h4>RELEVANSI</h4>
+                <p>Stunting, atau malnutrisi kronis, adalah akibat dari terhambatnya pertumbuhan yang terjadi sejak dalam kandungan dan masa kanak-kanak sebagai akibat dari asupan nutrisi yang tidak memadai dan serangan infeksi yang berulang. Stunting sebagian besar tidak dapat diubah, dan selain hasil pertumbuhan yang kurang optimal, stunting juga terkait dengan perkembangan kognitif yang buruk, penurunan kapasitas produktif, dan kesehatan yang buruk. Stunting juga dapat meningkatkan risiko kelebihan berat badan, obesitas, dan penyakit tidak menular di kemudian hari..</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="indikator-harapan-hidup" class="chart-card">
+            <div class="chart-header">
+              <h3 id="title-harapan">Angka Harapan Hidup Pada Saat Lahir <span>(Tahun)</span></h3>
+              <p>Pola Makan dan Gizi > Hasil Gizi dan Kesehatan</p>
+            </div>
+            <canvas id="chart-harapan"></canvas>
+            <p class="sumber"><strong>SUMBER :</strong> Biro Pusat Statistik (BPS): Susenas (National Socio-Economic Survey)</p>
+            <div class="desc">
+              <div>
+                <h4>PENGERTIAN</h4>
+                <p>-</p>
+              </div>
+              <div>
+                <h4>RELEVANSI</h4>
+                <p>-</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="indikator-indeks-gini" class="chart-card">
+            <div class="chart-header">
+              <h3 id="title-indeks-gini">Indeks Gini (Bank Dunia) <span>(Rasio)</span></h3>
+              <p>Faktor Pendorong > Pendapatan dan Distribusi Pertumbuhan</p>
+            </div>
+            <canvas id="chart-indeks-gini"></canvas>
+            <p class="sumber"><strong>SUMBER :</strong> Biro Pusat Statistik (BPS): Susenas Konsumsi dan Pengeluaran (National Socioeconomic Survey on Consumption and Expenditure)</p>
+            <div class="desc">
+              <div>
+                <h4>PENGERTIAN</h4>
+                <p>-</p>
+              </div>
+              <div>
+                <h4>RELEVANSI</h4>
+                <p>-</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="indikator-penduduk-miskin" class="chart-card">
+            <div class="chart-header">
+              <h3 id="title-penduduk-miskin">Rasio Penduduk Miskin <span>(Persen)</span></h3>
+              <p>Faktor Pendorong > Pendapatan dan Distribusi Pertumbuhan</p>
+            </div>
+            <canvas id="chart-penduduk-miskin"></canvas>
+            <p class="sumber"><strong>SUMBER :</strong> Biro Pusat Statistik (BPS): Susenas Konsumsi dan Pengeluaran (National Socioeconomic Survey on Consumption and Expenditure)</p>
+            <div class="desc">
+              <div>
+                <h4>PENGERTIAN</h4>
+                <p>-</p>
+              </div>
+              <div>
+                <h4>RELEVANSI</h4>
+                <p>-</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="indikator-kelasifikasi" class="chart-card">
+            <div class="chart-header">
+              <h3 id="title-kelasifikasi">Klasifikasi Pendapatan <span>(Persen)</span></h3>
+              <p>Faktor Pendorong > Pendapatan dan Distribusi Pertumbuhan</p>
+            </div>
+            <canvas id="chart-kelasifikasi"></canvas>
+            <p class="sumber"><strong>SUMBER :</strong> Biro Pusat Statistik (BPS): Susenas Konsumsi dan Pengeluaran (National Socioeconomic Survey on Consumption and Expenditure)</p>
+            <div class="desc">
+              <div>
+                <h4>PENGERTIAN</h4>
+                <p>-</p>
+              </div>
+              <div>
+                <h4>RELEVANSI</h4>
+                <p>-</p>
+              </div>
+            </div>
+      
+        <!-- Tambahkan bagian indikator lainnya di bawah ini jika ingin -->
+      </main>
+      
+  </div>
+
+  <script src="js/script-tren.js"></script>
+</body>
+</html>
