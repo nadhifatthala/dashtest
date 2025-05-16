@@ -7,12 +7,12 @@
     <link rel="icon" type="image/png" sizes="48x48" href="image/logo3.jpg">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/style-peta.css">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.0/dist/leaflet-search.min.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- Leaflet CSS (versi 1.7.1) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Leaflet Search CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.0/dist/leaflet-search.min.css" />
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -24,68 +24,124 @@
                 <h1>Direktorat Regional I | <span class="non-bold">Kementerian PPN/Bappenas</span></h1>
             </div>
             <nav>
-                <ul class="nav-menu">
-                    <ul class="nav-menu" >
-                        <li ><a href="index.html">Beranda</a></li>
-                        <li><a href="tentang.html">Tentang</a></li>
-                        <!-- <li><a href="#tableau-dashboard">Dashboard</a></li> -->
-                        <!-- <li><a href="peta.html">Peta</a></li> -->
-                        <li><a href="kontak.html">Kontak</a></li>
-                        <li><a href="tren.html">Indikator</a></li>
-                </ul>
-            </nav>
+                <ul class="menu" >
+                    <li ><a href="index.html">Beranda</a></li>
+                    <li><a href="tentang.html">Tentang</a></li>
+                    <li><a href="kontak.html">Kontak</a></li>
+                    <li><a href="tren.html">Indikator</a></li>
+              </ul>
+              <div class="tombol">
+                ☰
+            </div>
+          </nav>
         </div>
     </header>
     
     <div id="layerPanel" class="layer-panel">
         <div id="layerContent"></div>
     </div>
+
+    <!-- TOMBOL UNTUK MEMBUKA/MENUTUP PANEL LAYER -->
+    <div id="toggleLayerControlButtonContainer"> <!-- Kontainer untuk tombol dan panel layer -->
+        <div id="toggleLayerControlButton" class="toggle-layer-control-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-layers">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+        </div>
+
+        <!-- KONTROL LAYER KUSTOM BARU (Panel Daftar Layer) -->
+        <div id="customLayerControl" class="custom-layer-control" style="display: none;"> <!-- AWALNYA DISEMBUNYIKAN -->
+            <div class="custom-layer-control-header">
+                <strong>Daftar Layer</strong>
+                <button id="closeCustomLayerControl" class="close-button-custom-layer">×</button>
+            </div>
+            <div class="custom-layer-control-body">
+                <label><input type="checkbox" data-layer-name="stunting"> Data Stunting</label>
+                <label><input type="checkbox" data-layer-name="peternakan"> Data Peternakan</label>
+                <label><input type="checkbox" data-layer-name="pertanian"> Data Pertanian</label>
+                <label><input type="checkbox" data-layer-name="perkebunan"> Data Perkebunan</label>
+                <label><input type="checkbox" data-layer-name="perikanan"> Data Perikanan</label>
+            </div>
+        </div>
+    </div>
+
+
     <div id="map">
         <div class="legend">
             <h4>Legenda Peta</h4>
-            <div class="legend-item">
-                <span class="color-circle low"></span> <span>Stunting Rendah</span>
+            <div id="legendaGroupStunting" style="display:none;">
+                <div class="legend-item">
+                    <span class="color-circle low" style="background-color: green;"></span> <span>Stunting Rendah</span>
+                </div>
+                <div class="legend-item">
+                    <span class="color-circle medium" style="background-color: orange;"></span> <span>Stunting Sedang</span>
+                </div>
+                <div class="legend-item">
+                    <span class="color-circle high" style="background-color: red;"></span> <span>Stunting Tinggi</span>
+                </div>
+                 <div class="legend-item">
+                    <span class="color-circle" style="background-color: #CCCCCC;"></span> <span>Data Tidak Tersedia</span>
+                </div>
             </div>
-            <div class="legend-item">
-                <span class="color-circle medium"></span> <span>Stunting Sedang</span>
+            <div id="legendaGroupPeternakan" style="display:none;">
+                <div class="legend-item">
+                    <span class="color-circle" style="background-color: yellow;"></span> <span>Peternakan Unggas (Itik/Ayam)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="color-circle" style="background-color: brown;"></span> <span>Peternakan Ternak Besar (Sapi/Kerbau)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="color-circle" style="background-color: lightpink;"></span> <span>Peternakan Lainnya</span>
+                </div>
+                 <div class="legend-item">
+                    <span class="color-circle" style="background-color: #E0E0E0;"></span> <span>Data Tidak Tersedia</span>
+                </div>
             </div>
-            <div class="legend-item">
-                <span class="color-circle high"></span> <span>Stunting Tinggi</span>
+
+            <div id="legendaGroupPertanian" style="display:none;">
+                <div class="legend-item">
+                    <span class="color-circle" style="background-color: #90EE90;"></span> <span>Ada Data Pertanian</span>
+                </div>
+                 <div class="legend-item">
+                    <span class="color-circle" style="background-color: #E0E0E0;"></span> <span>Data Tidak Tersedia</span>
+                </div>
             </div>
-            <div class="legend-item">
+            <div id="legendaGroupPerkebunan" style="display:none;">
+                <div class="legend-item">
+                    <span class="color-circle" style="background-color: #8B4513;"></span> <span>Ada Data Perkebunan</span>
+                </div>
+                 <div class="legend-item">
+                    <span class="color-circle" style="background-color: #E0E0E0;"></span> <span>Data Tidak Tersedia</span>
+                </div>
+            </div>
+
+            <div id="legendaGroupPerikanan" style="display:none;">
+                <div class="legend-item">
+                    <span class="color-circle" style="background-color: blue;"></span> <span>Ada Data Perikanan</span>
+                </div>
+                 <div class="legend-item">
+                    <span class="color-circle" style="background-color: #E0E0E0;"></span> <span>Data Tidak Tersedia</span>
+                </div>
+            </div>
+
+            <div id="legendaBatasWilayah" class="legend-item">
                 <span class="color-box"></span> <span>Batas Wilayah</span>
             </div>
         </div>
-        
     </div>
-    </section>
-    
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-search@3.0.0/dist/leaflet-search.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
     <script src="js/peta.js"></script>
     
-    <!-- <script>
-        const ctx = document.getElementById('stuntingChart').getContext('2d');
-        const stuntingChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Kabupaten A', 'Kabupaten B', 'Kabupaten C', 'Kabupaten D', 'Kabupaten E'],
-                datasets: [{
-                    label: 'Persentase Stunting',
-                    data: [20, 35, 40, 25, 30],
-                    backgroundColor: ['#4CAF50', '#FFC107', '#F44336', '#2196F3', '#9C27B0']
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    </script> -->
+    <script type="text/javascript">
+		const tombol = document.querySelector('.tombol');
+		const menu = document.querySelector('.menu');
+		tombol.addEventListener('click', () => {
+			menu.classList.toggle('aktif');
+		});
+	</script>
 </body>
 </html>

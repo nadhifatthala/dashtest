@@ -1,13 +1,13 @@
-.hero-section {
+.hero-section-kontak {
   text-align: center;
   padding: 50px 20px;
   /* background-color: #f4f4f9; */
 }
-.hero-section h1 {
+.hero-section-kontak h1 {
   font-size: 2.5rem;
   color: #333;
 }
-.hero-section p {
+.hero-section-kontak p {
   font-size: 1.2rem;
   margin: 10px 0 30px;
   color: #666;
@@ -27,6 +27,20 @@
   color: #333;
 }
 .logo-kerjasama {
+  width: 220px; /* Sesuaikan ukuran logo */
+  height: auto;
+  transition: transform 0.3s ease}
+  .logo-kerjasama-akm {
+    width: 220px; /* Sesuaikan ukuran logo */
+    height: auto;
+    transition: transform 0.3s ease}
+    
+.logo-kerjasama-ppn {
+  width: 250px; /* Sesuaikan ukuran logo */
+  height: auto;
+  transition: transform 0.3s ease;
+}
+.logo-kerjasama-utm {
   width: 200px; /* Sesuaikan ukuran logo */
   height: auto;
   transition: transform 0.3s ease;
@@ -118,3 +132,22 @@ footer {
 .custom-a {
   padding-top:15px;
 }
+
+@media (max-width: 768px) {
+  .logo-kerjasama{
+    width: 100px; /* Sesuaikan ukuran logo */
+  }
+  .logo-kerjasama-akm{
+    position: relative;
+    top: 10px;
+    width: 100px; /* Sesuaikan ukuran logo */
+  }
+  .logo-kerjasama-ppn{
+    width: 165px; /* Sesuaikan ukuran logo */
+  }
+  .logo-kerjasama-utm{
+    width: 140px; /* Sesuaikan ukuran logo */
+  }
+
+}
+  

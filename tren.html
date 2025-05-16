@@ -21,15 +21,18 @@
       
               <!-- Navigasi -->
               <nav>
-                  <ul class="nav-menu" >
-                      <li ><a href="index.html">Beranda</a></li>
-                      <li><a href="tentang.html">Tentang</a></li>
-                      <!-- <li><a href="#tableau-dashboard">Dashboard</a></li> -->
-                      <!-- <li><a href="peta.html">Peta</a></li> -->
-                      <li><a href="kontak.html">Kontak</a></li>
-                      <li><a href="tren.html">Indikator</a></li>
-                  </ul>
-              </nav>
+                <ul class="menu" >
+                    <li ><a href="index.html">Beranda</a></li>
+                    <li><a href="tentang.html">Tentang</a></li>
+                    <!-- <li><a href="#tableau-dashboard">Dashboard</a></li> -->
+                    <!-- <li><a href="peta.html">Peta</a></li> -->
+                    <li><a href="kontak.html">Kontak</a></li>
+                    <li><a href="tren.html">Indikator</a></li>
+              </ul>
+              <div class="tombol">
+                &#9776;
+            </div>
+          </nav>
           </div>
       </header>
   <div class="legend-header">
@@ -42,7 +45,7 @@
     </div>
   </div>
 
-  <div class="container">
+  <div class="container-">
     <aside class="sidebar">
       <div id="location-selector-wrapper">
         <label for="location-selector">Pilih Wilayah:</label>
@@ -51,7 +54,7 @@
             <!-- Options will be populated by JavaScript -->
         </select>
         </div>
-        <ul id="indicator-nav">
+        <ul class="indicator-nav">
           <li onclick="scrollToSection('indikator-gizi')">PREVALENSI KEKURANGAN GIZI</li>
           <li onclick="scrollToSection('indikator-stunting')">STUNTING PADA ANAK DIBAWAH 5 TAHUN</li>
           <li onclick="scrollToSection('indikator-harapan-hidup')">ANGKA HARAPAN HIDUP PADA SAAT LAHIR</li>
@@ -183,5 +186,17 @@
   </div>
 
   <script src="js/script-tren.js"></script>
+  <script type="text/javascript">
+		// deklarasi tombol dan menu
+		const tombol = document.querySelector('.tombol');
+		const menu = document.querySelector('.menu');
+ 
+		// membuat event click
+		// pada saat tombol di click, tambahkan class aktif pada class menu
+		// saat diklik lagi, maka class aktif dihilangkan dari class menu (toggle)
+		tombol.addEventListener('click', () => {
+			menu.classList.toggle('aktif');
+		});
+	</script>
 </body>
 </html>

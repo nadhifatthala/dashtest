@@ -19,17 +19,19 @@
         </div>
 
         <!-- Navigasi -->
-        <nav style=" z-index: 1000; /* Pastikan navbar berada di atas konten */">
-          <ul class="nav-menu">
-            <ul class="nav-menu" >
+        <nav>
+          <ul class="menu" >
               <li ><a href="index.html">Beranda</a></li>
               <li><a href="tentang.html">Tentang</a></li>
               <!-- <li><a href="#tableau-dashboard">Dashboard</a></li> -->
               <!-- <li><a href="peta.html">Peta</a></li> -->
               <li><a href="kontak.html">Kontak</a></li>
               <li><a href="tren.html">Indikator</a></li>
-          </ul>
-        </nav>
+        </ul>
+        <div class="tombol">
+          &#9776;
+      </div>
+    </nav>
       </div>
     </header>
 
@@ -168,7 +170,18 @@
       
 
     <!-- Footer -->
-    
+    <script type="text/javascript">
+      // deklarasi tombol dan menu
+      const tombol = document.querySelector('.tombol');
+      const menu = document.querySelector('.menu');
+   
+      // membuat event click
+      // pada saat tombol di click, tambahkan class aktif pada class menu
+      // saat diklik lagi, maka class aktif dihilangkan dari class menu (toggle)
+      tombol.addEventListener('click', () => {
+        menu.classList.toggle('aktif');
+      });
+    </script>
   </body>
 </html>
 
