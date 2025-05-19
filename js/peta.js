@@ -109,7 +109,30 @@ const getColorStunting = (rate) => {
 function styleStunting(feature) {
     return { fillColor: getColorStunting(feature.properties.stunting_rate), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7 };
 }
+
+// MODIFIKASI DI SINI untuk menambahkan label wilayah
+// Di dalam file js/peta.js
+
+// ... (kode Anda yang lain tetap sama) ...
+
+// Di dalam file js/peta.js
+
+// ... (kode Anda yang lain tetap sama) ...
+
+// Di dalam file js/peta.js
+
+// ... (kode Anda yang lain tetap sama) ...
+
+// Di dalam file js/peta.js
+
+// ... (kode Anda yang lain tetap sama) ...
+
+// Di dalam file js/peta.js
+
+// ... (kode Anda yang lain tetap sama) ...
+
 function onEachFeatureDefault(feature, layer) {
+    // Handler klik yang sudah ada untuk popup dan panel info
     layer.on('click', function (e) {
         showLayerPanel(feature.properties);
         const popupContentHtml = createPopupContent(feature.properties);
@@ -118,7 +141,79 @@ function onEachFeatureDefault(feature, layer) {
             .setContent(popupContentHtml)
             .openOn(map);
     });
+
+    // Tambahkan label wilayah menggunakan L.Marker dengan L.DivIcon
+    if (feature.properties && feature.properties.WADMKK && typeof turf !== 'undefined') {
+        const namaWilayah = feature.properties.WADMKK;
+
+        // Kondisi untuk menampilkan label (kecuali "Kota " selain Surabaya dan Batu)
+        if (namaWilayah === "Kota Surabaya" || namaWilayah === "Kota Batu" || !namaWilayah.startsWith("Kota ")) {
+            
+            let centerLatLng;
+
+            // PENANGANAN KHUSUS UNTUK SUMENEP
+            if (namaWilayah === "Sumenep") {
+                // Tentukan koordinat manual untuk label Sumenep
+                // Anda perlu mencari koordinat yang pas di atas salah satu pulau Sumenep.
+                // Format: L.latLng(latitude, longitude)
+                // Contoh (INI HANYA PERKIRAAN, ANDA HARUS MENCARI KOORDINAT YANG TEPAT):
+                centerLatLng = L.latLng(-7.0100, 113.8600); // Ganti dengan koordinat yang Anda inginkan untuk Sumenep
+            } else {
+                // Untuk wilayah lain, hitung seperti biasa
+                try {
+                    const pointOnFeature = turf.pointOnFeature(feature.geometry);
+                    if (pointOnFeature && pointOnFeature.geometry && pointOnFeature.geometry.coordinates) {
+                        centerLatLng = L.latLng(pointOnFeature.geometry.coordinates[1], pointOnFeature.geometry.coordinates[0]);
+                    } else {
+                        console.warn("turf.pointOnFeature gagal untuk:", namaWilayah, "Menggunakan bounds center.");
+                        if (layer.getBounds && layer.getBounds().isValid()) { // Tambah pengecekan isValid()
+                             centerLatLng = layer.getBounds().getCenter();
+                        } else {
+                            console.warn("Tidak bisa mendapatkan bounds yang valid untuk:", namaWilayah);
+                            return; 
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error menghitung centroid untuk " + namaWilayah + ": ", e, "Menggunakan bounds center.");
+                    if (layer.getBounds && layer.getBounds().isValid()) { // Tambah pengecekan isValid()
+                        centerLatLng = layer.getBounds().getCenter();
+                    } else {
+                        console.warn("Tidak bisa mendapatkan bounds yang valid setelah error Turf.js untuk:", namaWilayah);
+                       return; 
+                    }
+                }
+            }
+            
+            if (!centerLatLng) {
+                console.warn("Tidak bisa menentukan centerLatLng untuk label:", namaWilayah);
+                return; // Lewati jika tidak bisa mendapatkan koordinat pusat
+            }
+
+            const labelIcon = L.divIcon({
+                className: 'region-map-label-divicon',
+                html: `<span>${namaWilayah}</span>`,
+                iconSize: null,
+                iconAnchor: [0, 0]
+            });
+
+            L.marker(centerLatLng, {
+                icon: labelIcon,
+                interactive: false,
+            }).addTo(map);
+        }
+    }
 }
+
+// ... (sisa kode Anda tetap sama) ...
+
+// ... (sisa kode Anda tetap sama) ...
+// ... (sisa kode Anda tetap sama) ...
+
+// ... (sisa kode Anda tetap sama) ...
+
+// ... (sisa kode Anda tetap sama) ...
+// AKHIR MODIFIKASI
+
 function getColorPeternakan(featureProperties) {
     const data = featureProperties.categories && featureProperties.categories.Peternakan;
     if (!data || data.length === 0) return '#E0E0E0';
@@ -321,6 +416,8 @@ function initializeApplication() {
     const komoditasChildCheckboxes = document.querySelectorAll('.komoditas-child-checkbox');
     const stuntingCheckbox = document.querySelector('input[data-layer-name="stunting"]');
 
+    let masterActionInProgress = false; 
+
     function updateMapAndLegendsFromCheckboxes() {
         allIndividualLayerCheckboxes.forEach(cb => {
             const layerName = cb.dataset.layerName;
@@ -335,7 +432,9 @@ function initializeApplication() {
             }
         });
         updateVisibleLegends();
-        syncKomoditasMasterCheckboxState();
+        if (!masterActionInProgress) {
+            syncKomoditasMasterCheckboxState();
+        }
     }
 
     function syncKomoditasMasterCheckboxState() {
@@ -346,25 +445,44 @@ function initializeApplication() {
                 anyChildChecked = true;
             }
         });
-        // Hanya set master checked jika ada anak yang tercentang DAN stunting tidak tercentang
-        // atau jika tidak ada stunting checkbox sama sekali
         const stuntingIsChecked = stuntingCheckbox ? stuntingCheckbox.checked : false;
         komoditasMasterCheckbox.checked = anyChildChecked && !stuntingIsChecked;
     }
 
-    // Event listener untuk semua checkbox layer INDIVIDUAL (Stunting dan anak-anak Komoditas)
+    if (komoditasMasterCheckbox) {
+        komoditasMasterCheckbox.addEventListener('change', function() {
+            const isMasterNowChecked = this.checked;
+            masterActionInProgress = true; 
+
+            if (isMasterNowChecked) {
+                if (stuntingCheckbox) stuntingCheckbox.checked = false;
+                komoditasChildCheckboxes.forEach(childCb => {
+                    childCb.checked = true;
+                });
+                if (komoditasChildCheckboxes.length === 0) {
+                    this.checked = false; 
+                }
+            } else {
+                komoditasChildCheckboxes.forEach(childCb => {
+                    childCb.checked = false;
+                });
+            }
+            updateMapAndLegendsFromCheckboxes(); 
+            masterActionInProgress = false; 
+        });
+    }
+
     allIndividualLayerCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+            if (masterActionInProgress) {
+                return;
+            }
             if (this.checked) {
-                // Jika yang dicentang adalah STUNTING
                 if (this === stuntingCheckbox) {
-                    if (komoditasMasterCheckbox) komoditasMasterCheckbox.checked = false; // Uncheck master komoditas
-                    komoditasChildCheckboxes.forEach(childCb => childCb.checked = false); // Uncheck semua anak komoditas
-                }
-                // Jika yang dicentang adalah ANAK KOMODITAS
-                else if (Array.from(komoditasChildCheckboxes).includes(this)) {
-                    if (stuntingCheckbox) stuntingCheckbox.checked = false; // Uncheck stunting
-                    // Uncheck anak komoditas LAINNYA (mempertahankan satu anak komoditas aktif jika diklik individual)
+                    if (komoditasMasterCheckbox) komoditasMasterCheckbox.checked = false;
+                    komoditasChildCheckboxes.forEach(childCb => childCb.checked = false);
+                } else if (Array.from(komoditasChildCheckboxes).includes(this)) {
+                    if (stuntingCheckbox) stuntingCheckbox.checked = false;
                     komoditasChildCheckboxes.forEach(otherChildCb => {
                         if (otherChildCb !== this) {
                             otherChildCb.checked = false;
@@ -372,58 +490,17 @@ function initializeApplication() {
                     });
                 }
             }
-            // Jika checkbox di-uncheck, master komoditas akan di-update oleh syncKomoditasMasterCheckboxState
             updateMapAndLegendsFromCheckboxes();
         });
     });
 
-    // Event listener untuk checkbox MASTER KOMODITAS
-    if (komoditasMasterCheckbox) {
-        komoditasMasterCheckbox.addEventListener('change', function() {
-            const isMasterNowChecked = this.checked;
-
-            if (isMasterNowChecked) {
-                // Jika master BARU SAJA DICENTANG:
-                // 1. Uncheck stunting
-                if (stuntingCheckbox) stuntingCheckbox.checked = false;
-
-                // 2. Centang SEMUA anak komoditas
-                //    Namun, untuk menjaga konsistensi "satu layer aktif" saat interaksi awal dari master,
-                //    kita akan centang anak pertama dan pastikan yang lain tidak tercentang.
-                //    Jika Anda benar-benar ingin SEMUA anak tercentang dan SEMUA layer anak tampil,
-                //    maka logika "satu layer aktif" di event listener anak perlu dipertimbangkan ulang.
-                //    Untuk saat ini, kita buat master mencentang SEMUA anak, lalu fungsi update
-                //    akan menerapkan layer sesuai state checkbox tersebut.
-                komoditasChildCheckboxes.forEach((childCb, index) => {
-                    // **PERUBAHAN DI SINI: Centang semua anak jika master dicentang**
-                    childCb.checked = true;
-                });
-
-                // Jika tidak ada anak komoditas, master tidak seharusnya bisa dicentang
-                if (komoditasChildCheckboxes.length === 0) {
-                    this.checked = false; // Batalkan centang master jika tidak ada anak
-                }
-            } else {
-                // Jika master BARU SAJA DI-UNCHECK, uncheck semua anaknya
-                komoditasChildCheckboxes.forEach(childCb => {
-                    childCb.checked = false;
-                });
-            }
-            updateMapAndLegendsFromCheckboxes(); // Update peta dan legenda berdasarkan state checkbox baru
-        });
-    }
-
-    // Initial state setup
+    masterActionInProgress = true; 
     if (stuntingCheckbox) {
-        // Stunting aktif jika layer stunting ada dan sudah ditambahkan ke peta (default)
         stuntingCheckbox.checked = (stuntingLayer && map.hasLayer(stuntingLayer));
     }
-    komoditasChildCheckboxes.forEach(cb => cb.checked = false); // Anak komoditas awalnya tidak aktif
-    syncKomoditasMasterCheckboxState(); // Sinkronkan master berdasarkan anak dan stunting
-    updateMapAndLegendsFromCheckboxes(); // Terapkan layer ke peta dan update legenda awal
-
-// ... sisa dari fungsi initializeApplication() Anda tetap sama ...
-// (Tombol Tutup dan Toggle Panel Layer, LOGIKA DROPDOWN LEGENDA, LOGIKA GRUP LAYER KOMODITAS (Toggle Expand/Collapse), LOGIKA GALERI BASEMAP, dll.)
+    komoditasChildCheckboxes.forEach(cb => cb.checked = false);
+    updateMapAndLegendsFromCheckboxes(); 
+    masterActionInProgress = false; 
 
     // --- Tombol Tutup dan Toggle Panel Layer ---
     if (closeCustomLayerControlButton && customLayerControlPanel) {
@@ -456,16 +533,13 @@ function initializeApplication() {
     layerItemsWithLegend.forEach(item => {
         const toggleBtn = item.querySelector('.legend-toggle-btn');
         const legendContentPanel = item.querySelector('.legend-content-panel');
-        const checkbox = item.querySelector('input[type="checkbox"]'); // Checkbox di dalam item ini
+        const checkbox = item.querySelector('input[type="checkbox"]'); 
 
-        // Hanya proses jika ada checkbox dan tombol panah
         if (!toggleBtn || !checkbox) return;
         
-        // Hanya proses jika ada panel legenda yang terkait dengan item ini
         if (legendContentPanel) {
-            // Ambil legendGroupId dari checkbox di dalam item ini
             const legendGroupId = checkbox.dataset.legendGroupId;
-            if (!legendGroupId) { // Jika tidak ada legendGroupId, mungkin sembunyikan tombol
+            if (!legendGroupId) { 
                 toggleBtn.style.visibility = 'hidden';
                 legendContentPanel.style.display = 'none';
                 return;
@@ -508,20 +582,16 @@ function initializeApplication() {
             const groupHeader = button.closest('.layer-group-header');
             if (groupHeader) {
                 groupHeader.addEventListener('click', (event) => {
-                    // Cek apakah target klik adalah checkbox master atau labelnya
                     const masterLabel = groupHeader.querySelector('.group-master-label');
                     if (masterLabel && masterLabel.contains(event.target)) {
-                        // Jika klik adalah pada checkbox master atau labelnya, jangan toggle grup.
-                        // Event change checkbox akan ditangani terpisah.
                         return;
                     }
-
-                    // Jika klik BUKAN pada checkbox/label master, baru toggle grup
-                    // Ini biasanya berarti klik pada tombol panah atau area kosong di header
-                    const isExpanded = groupContentPanel.style.display === 'block';
-                    groupContentPanel.style.display = isExpanded ? 'none' : 'block';
-                    button.setAttribute('aria-expanded', String(!isExpanded));
-                    updateGroupArrowIcon();
+                    if (event.target === button || button.contains(event.target) || !masterLabel || !masterLabel.contains(event.target)) {
+                        const isExpanded = groupContentPanel.style.display === 'block';
+                        groupContentPanel.style.display = isExpanded ? 'none' : 'block';
+                        button.setAttribute('aria-expanded', String(!isExpanded));
+                        updateGroupArrowIcon();
+                    }
                 });
             }
         } else {
