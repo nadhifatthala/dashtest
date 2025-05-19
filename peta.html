@@ -12,12 +12,15 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <!-- Leaflet Search CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.0/dist/leaflet-search.min.css" />
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
+        <!-- ... Header Anda ... -->
         <div class="header-container">
             <div class="logo-title">
                 <img src="image/Reg I Primary without Text.png" alt="Logo" class="logo">
@@ -42,7 +45,8 @@
     </div>
 
     <!-- TOMBOL UNTUK MEMBUKA/MENUTUP PANEL LAYER -->
-    <div id="toggleLayerControlButtonContainer"> <!-- Kontainer untuk tombol dan panel layer -->
+    <div id="toggleLayerControlButtonContainer">
+        <!-- ... Tombol Panel Layer Anda ... -->
         <div id="toggleLayerControlButton" class="toggle-layer-control-button">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-layers">
                 <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -50,26 +54,134 @@
                 <polyline points="2 12 12 17 22 12"></polyline>
             </svg>
         </div>
-
         <!-- KONTROL LAYER KUSTOM BARU (Panel Daftar Layer) -->
-        <div id="customLayerControl" class="custom-layer-control" style="display: none;"> <!-- AWALNYA DISEMBUNYIKAN -->
+        <div id="customLayerControl" class="custom-layer-control" style="display: none;">
+            <!-- ... Konten Panel Layer Anda ... -->
             <div class="custom-layer-control-header">
                 <strong>Daftar Layer</strong>
                 <button id="closeCustomLayerControl" class="close-button-custom-layer">×</button>
             </div>
             <div class="custom-layer-control-body">
-                <label><input type="checkbox" data-layer-name="stunting"> Data Stunting</label>
-                <label><input type="checkbox" data-layer-name="peternakan"> Data Peternakan</label>
-                <label><input type="checkbox" data-layer-name="pertanian"> Data Pertanian</label>
-                <label><input type="checkbox" data-layer-name="perkebunan"> Data Perkebunan</label>
-                <label><input type="checkbox" data-layer-name="perikanan"> Data Perikanan</label>
+                <!-- Data Stunting (Tetap seperti sebelumnya) -->
+                <div class="layer-item-with-legend">
+                    <div class="layer-control-row">
+                        <button class="legend-toggle-btn" aria-expanded="false" aria-controls="legend-content-stunting">
+                            <span class="toggle-arrow">▸</span>
+                        </button>
+                        <label class="layer-label-text">
+                            <input type="checkbox" data-layer-name="stunting" data-legend-group-id="legendaGroupStunting"> Data Stunting
+                        </label>
+                    </div>
+                    <div class="legend-content-panel" id="legend-content-stunting" style="display: none;">
+                        <!-- Konten legenda akan diisi oleh JavaScript -->
+                    </div>
+                </div>
+
+                <!-- BARU: Grup untuk Data Komoditas -->
+                <div class="layer-group-item">
+                    <div class="layer-group-header">
+                        <button class="group-toggle-btn" aria-expanded="false" aria-controls="group-content-komoditas">
+                            <span class="toggle-arrow">▸</span>
+                        </button>
+                        <!-- CHECKBOX MASTER DAN LABELNYA -->
+                        <label class="layer-label-text group-master-label">
+                            <input type="checkbox" id="komoditasMasterCheckbox" data-is-master="true">
+                            <span class="group-label-text">Data Komoditas</span>
+                        </label>
+                    </div>
+                    <div class="layer-group-content" id="group-content-komoditas" style="display: none;">
+                        <!-- Layer Peternakan (sekarang di dalam grup) -->
+                        <div class="layer-item-with-legend child-layer-item">
+                            <div class="layer-control-row">
+                                <button class="legend-toggle-btn" aria-expanded="false" aria-controls="legend-content-peternakan">
+                                    <span class="toggle-arrow">▸</span>
+                                </button>
+                                <label class="layer-label-text">
+                                    <input type="checkbox" data-layer-name="peternakan" data-legend-group-id="legendaGroupPeternakan" class="komoditas-child-checkbox">
+                                     Data Peternakan
+                                </label>
+                            </div>
+                            <div class="legend-content-panel" id="legend-content-peternakan" style="display: none;"></div>
+                        </div>
+                        <!-- Layer Pertanian (sekarang di dalam grup) -->
+                        <div class="layer-item-with-legend child-layer-item">
+                            <div class="layer-control-row">
+                                <button class="legend-toggle-btn" aria-expanded="false" aria-controls="legend-content-pertanian">
+                                    <span class="toggle-arrow">▸</span>
+                                </button>
+                                <label class="layer-label-text">
+                                    <input type="checkbox" data-layer-name="pertanian" data-legend-group-id="legendaGroupPertanian" class="komoditas-child-checkbox">
+                                     Data Pertanian
+                                </label>
+                            </div>
+                            <div class="legend-content-panel" id="legend-content-pertanian" style="display: none;"></div>
+                        </div>
+                        <!-- Layer Perkebunan (sekarang di dalam grup) -->
+                        <div class="layer-item-with-legend child-layer-item">
+                            <div class="layer-control-row">
+                                <button class="legend-toggle-btn" aria-expanded="false" aria-controls="legend-content-perkebunan">
+                                    <span class="toggle-arrow">▸</span>
+                                </button>
+                                <label class="layer-label-text">
+                                    <input type="checkbox" data-layer-name="perkebunan" data-legend-group-id="legendaGroupPerkebunan" class="komoditas-child-checkbox">
+                                     Data Perkebunan
+                                </label>
+                            </div>
+                            <div class="legend-content-panel" id="legend-content-perkebunan" style="display: none;"></div>
+                        </div>
+                        <!-- Layer Perikanan (sekarang di dalam grup) -->
+                        <div class="layer-item-with-legend child-layer-item">
+                            <div class="layer-control-row">
+                                <button class="legend-toggle-btn" aria-expanded="false" aria-controls="legend-content-perikanan">
+                                    <span class="toggle-arrow">▸</span>
+                                </button>
+                                <label class="layer-label-text">
+                                    <input type="checkbox" data-layer-name="perikanan" data-legend-group-id="legendaGroupPerikanan" class="komoditas-child-checkbox">
+                                     Data Perikanan
+                                </label>
+                            </div>
+                            <div class="legend-content-panel" id="legend-content-perikanan" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Akhir Grup Data Komoditas -->
             </div>
         </div>
     </div>
 
+    <!-- BARU: TOMBOL DAN PANEL GALERI BASEMAP -->
+    <div id="toggleBasemapGalleryButton" class="custom-map-button" title="Galeri Peta Dasar">
+        <i class="fas fa-map"></i> <!-- Ikon untuk galeri, bisa diganti -->
+    </div>
+
+   <!-- Di dalam file index.html -->
+<div id="basemapGalleryPanel" class="basemap-gallery-panel" style="display: none;">
+    <div class="basemap-gallery-header">
+        <span>Galeri Peta Dasar</span>
+        <button id="closeBasemapGalleryButton" class="close-button-custom-gallery">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="basemap-gallery-content">
+        <!-- Item untuk Basemap OSM Standard (Default) -->
+        <div class="basemap-item active" data-basemap-type="osmStandard">
+            <img src="image/osm.png" alt="OpenStreetMap Standard">
+            <span>OpenStreetMap Standard</span>
+        </div>
+        <!-- Item untuk Basemap Esri Imagery -->
+        <div class="basemap-item" data-basemap-type="esriImagery">
+            <img src="image/esri.png" alt="Esri Imagery">
+            <span>Esri Imagery</span>
+        </div>
+    </div>
+</div>
+    </div>
+    <!-- AKHIR BARU: TOMBOL DAN PANEL GALERI BASEMAP -->
+
 
     <div id="map">
-        <div class="legend">
+        <!-- ... Legenda utama Anda (opsional, bisa disembunyikan dengan CSS) ... -->
+        <div class="legend" style="display: none;"> 
             <h4>Legenda Peta</h4>
             <div id="legendaGroupStunting" style="display:none;">
                 <div class="legend-item">
@@ -99,7 +211,6 @@
                     <span class="color-circle" style="background-color: #E0E0E0;"></span> <span>Data Tidak Tersedia</span>
                 </div>
             </div>
-
             <div id="legendaGroupPertanian" style="display:none;">
                 <div class="legend-item">
                     <span class="color-circle" style="background-color: #90EE90;"></span> <span>Ada Data Pertanian</span>
@@ -116,7 +227,6 @@
                     <span class="color-circle" style="background-color: #E0E0E0;"></span> <span>Data Tidak Tersedia</span>
                 </div>
             </div>
-
             <div id="legendaGroupPerikanan" style="display:none;">
                 <div class="legend-item">
                     <span class="color-circle" style="background-color: blue;"></span> <span>Ada Data Perikanan</span>
@@ -125,7 +235,6 @@
                     <span class="color-circle" style="background-color: #E0E0E0;"></span> <span>Data Tidak Tersedia</span>
                 </div>
             </div>
-
             <div id="legendaBatasWilayah" class="legend-item">
                 <span class="color-box"></span> <span>Batas Wilayah</span>
             </div>

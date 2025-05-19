@@ -1,382 +1,198 @@
-    // js/peta.js
+// js/peta.js
 
-    // Inisialisasi Peta
-    var map = L.map('map').setView([-7.5666, 112.2384], 8);
+// Inisialisasi Peta dan Basemap Utama
+var map = L.map('map').setView([-7.5666, 112.2384], 8);
 
-    // Tambahkan Tile Layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">BAPPENAS</a> - Direktorat Regional I'
-    }).addTo(map);
+// Simpan referensi ke basemap utama Anda dan tambahkan ke peta
+var osmBasemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors - BAPPENAS Pembangunan Indonesia Barat'
+}).addTo(map);
 
-    // --- Variabel Global untuk Layer dan Data ---
-    var stuntingLayer, peternakanLayer, pertanianLayer, perkebunanLayer, perikananLayer;
-    var geojsonData;
-    let kabupatenDataForSearch = []; // Untuk pencarian kustom
-    let legends; // Definisikan di scope yang lebih luas
+// Variabel Global
+var stuntingLayer, peternakanLayer, pertanianLayer, perkebunanLayer, perikananLayer;
+var geojsonData;
+let kabupatenDataForSearch = [];
+let legends;
+let currentBasemapLayer = osmBasemap; // Basemap OSM adalah yang aktif saat ini
+let stuntingChart = null; // Deklarasi tunggal di scope global
 
-    // --- Fungsi Styling dan Popup Umum ---
-    function createPopupContent(properties) {
-        // ... (Kode fungsi createPopupContent Anda tetap sama)
-        let content = `
-            <div style="text-align: left; max-height: 300px; overflow-y: auto; padding-right:10px;">
-                <div style="text-align: center;">
-                    <img src="${properties.icon_image || 'image/default.jpg'}" style="width:100px; height:100px; border-radius:5px; margin-bottom:10px;"><br>
-                    <b style="font-size: 17px;">${properties.WADMKK}</b><br>
-                    Provinsi: ${properties.WADMPR}<br>
-                </div>`;
-        let dataAdded = false;
-        if (map.hasLayer(stuntingLayer) && typeof properties.stunting_rate !== 'undefined') {
-            content += `<hr style="margin: 8px 0;">
-                        <strong>Tingkat Stunting:</strong> <strong>${properties.stunting_rate}%</strong><br>
-                        Komoditas Utama Umum: ${properties.main_commodity || '-'}`;
+// --- Definisi Tile Layers Tambahan ---
+const additionalTileLayers = {
+    esriImagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'contributors - BAPPENAS Pembangunan Indonesia Barat'
+    })
+};
+
+// Fungsi untuk mengatur basemap aktif
+function setBasemap(basemapType) {
+    let newLayerToSet;
+    let activeBasemapTypeForGallery;
+
+    if (basemapType === 'osmStandard') {
+        newLayerToSet = osmBasemap;
+        activeBasemapTypeForGallery = 'osmStandard';
+    } else if (basemapType === 'esriImagery' && additionalTileLayers.esriImagery) {
+        newLayerToSet = additionalTileLayers.esriImagery;
+        activeBasemapTypeForGallery = 'esriImagery';
+    } else {
+        console.error("Basemap type not recognized or not defined:", basemapType);
+        return;
+    }
+
+    if (currentBasemapLayer && map.hasLayer(currentBasemapLayer) && currentBasemapLayer !== newLayerToSet) {
+        map.removeLayer(currentBasemapLayer);
+    }
+
+    if (!map.hasLayer(newLayerToSet)) {
+        newLayerToSet.addTo(map);
+    }
+    currentBasemapLayer = newLayerToSet;
+
+    document.querySelectorAll('.basemap-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.basemapType === activeBasemapTypeForGallery) {
+            item.classList.add('active');
+        }
+    });
+}
+
+
+// --- Fungsi-fungsi lain (createPopupContent, getColorStunting, dll.) ---
+function createPopupContent(properties) {
+    let content = `
+        <div style="text-align: left; max-height: 300px; overflow-y: auto; padding-right:10px;">
+            <div style="text-align: center;">
+                <img src="${properties.icon_image || 'image/default.jpg'}" style="width:100px; height:100px; border-radius:5px; margin-bottom:10px;"><br>
+                <b style="font-size: 17px;">${properties.WADMKK}</b><br>
+                Provinsi: ${properties.WADMPR}<br>
+            </div>`;
+    let dataAdded = false;
+    if (stuntingLayer && map.hasLayer(stuntingLayer) && typeof properties.stunting_rate !== 'undefined') {
+        content += `<hr style="margin: 8px 0;">
+                    <strong>Tingkat Stunting:</strong> <strong>${properties.stunting_rate}%</strong><br>
+                    Komoditas Utama Umum: ${properties.main_commodity || '-'}`;
+        dataAdded = true;
+    }
+    const categoriesToShow = {
+        'Peternakan': { layer: peternakanLayer, key: 'Peternakan' },
+        'Pertanian': { layer: pertanianLayer, key: 'Pertanian' },
+        'Perkebunan': { layer: perkebunanLayer, key: 'Perkebunan' },
+        'Perikanan': { layer: perikananLayer, key: 'Perikanan' }
+    };
+    for (const categoryName in categoriesToShow) {
+        const catInfo = categoriesToShow[categoryName];
+        if (catInfo.layer && map.hasLayer(catInfo.layer)) {
+            content += `<hr style="margin: 8px 0;">`;
+            if (properties.categories && properties.categories[catInfo.key] && properties.categories[catInfo.key].length > 0) {
+                content += `<strong>Komoditas ${categoryName}:</strong><ul style="padding-left: 20px;">`;
+                properties.categories[catInfo.key].forEach(item => {
+                    content += `<li>${item.name}: ${item.value}</li>`;
+                });
+                content += `</ul>`;
+            } else {
+                content += `<strong>Komoditas ${categoryName}:</strong><br><em>Tidak ada data</em>`;
+            }
             dataAdded = true;
         }
-        const categoriesToShow = {
-            'Peternakan': { layer: peternakanLayer, key: 'Peternakan' },
-            'Pertanian': { layer: pertanianLayer, key: 'Pertanian' },
-            'Perkebunan': { layer: perkebunanLayer, key: 'Perkebunan' },
-            'Perikanan': { layer: perikananLayer, key: 'Perikanan' }
-        };
-        for (const categoryName in categoriesToShow) {
-            const catInfo = categoriesToShow[categoryName];
-            if (map.hasLayer(catInfo.layer)) {
-                content += `<hr style="margin: 8px 0;">`;
-                if (properties.categories && properties.categories[catInfo.key] && properties.categories[catInfo.key].length > 0) {
-                    content += `<strong>Komoditas ${categoryName}:</strong><ul style="padding-left: 20px;">`;
-                    properties.categories[catInfo.key].forEach(item => {
-                        content += `<li>${item.name}: ${item.value}</li>`;
-                    });
-                    content += `</ul>`;
-                } else {
-                    content += `<strong>Komoditas ${categoryName}:</strong><br><em>Tidak ada data</em>`;
-                }
-                dataAdded = true;
-            }
-        }
-        if (!dataAdded && !map.hasLayer(stuntingLayer)) {
-            content += `<p style="margin-top:10px; text-align:center;"><em>Pilih layer data untuk menampilkan informasi.</em></p>`;
-        }
-        content += `</div>`;
-        return content;
     }
-
-    // --- STUNTING ---
-    const getColorStunting = (rate) => {
-        // ... (Kode fungsi getColorStunting Anda tetap sama)
-        if (rate === null || typeof rate === 'undefined') return '#CCCCCC';
-        return rate > 30 ? 'red' : rate > 20 ? 'orange' : 'green';
+    if (!dataAdded && (!stuntingLayer || !map.hasLayer(stuntingLayer))) {
+        content += `<p style="margin-top:10px; text-align:center;"><em>Pilih layer data untuk menampilkan informasi.</em></p>`;
+    }
+    content += `</div>`;
+    return content;
+}
+const getColorStunting = (rate) => {
+    if (rate === null || typeof rate === 'undefined') return '#CCCCCC';
+    return rate > 30 ? 'red' : rate > 20 ? 'orange' : 'green';
+};
+function styleStunting(feature) {
+    return { fillColor: getColorStunting(feature.properties.stunting_rate), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7 };
+}
+function onEachFeatureDefault(feature, layer) {
+    layer.on('click', function (e) {
+        showLayerPanel(feature.properties);
+        const popupContentHtml = createPopupContent(feature.properties);
+        L.popup({ maxWidth: 350 })
+            .setLatLng(e.latlng)
+            .setContent(popupContentHtml)
+            .openOn(map);
+    });
+}
+function getColorPeternakan(featureProperties) {
+    const data = featureProperties.categories && featureProperties.categories.Peternakan;
+    if (!data || data.length === 0) return '#E0E0E0';
+    const utama = data[0].name.toLowerCase();
+    if (utama.includes('itik') || utama.includes('ayam')) return 'yellow';
+    else if (utama.includes('sapi') || utama.includes('kerbau') || utama.includes('kambing')) return 'brown';
+    return 'lightpink';
+}
+function stylePeternakan(feature) {
+    return { fillColor: getColorPeternakan(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7 };
+}
+function getColorPertanian(featureProperties) {
+    const data = featureProperties.categories && featureProperties.categories.Pertanian;
+    if (!data || data.length === 0) return '#E0E0E0';
+    return '#90EE90';
+}
+function stylePertanian(feature) {
+    return { fillColor: getColorPertanian(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
+}
+function getColorPerkebunan(featureProperties) {
+    const data = featureProperties.categories && featureProperties.categories.Perkebunan;
+    if (!data || data.length === 0) return '#E0E0E0';
+    return '#8B4513';
+}
+function stylePerkebunan(feature) {
+    return { fillColor: getColorPerkebunan(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
+}
+function getColorPerikanan(featureProperties) {
+    const data = featureProperties.categories && featureProperties.categories.Perikanan;
+    if (!data || data.length === 0) return '#E0E0E0';
+    return 'blue';
+}
+function stylePerikanan(feature) {
+    return { fillColor: getColorPerikanan(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
+}
+function updateVisibleLegends() {
+    if (!legends) { console.warn("Objek 'legends' belum ada saat updateVisibleLegends."); return; }
+     const layerDisplayStatus = {
+        stunting: stuntingLayer && map.hasLayer(stuntingLayer),
+        peternakan: peternakanLayer && map.hasLayer(peternakanLayer),
+        pertanian: pertanianLayer && map.hasLayer(pertanianLayer),
+        perkebunan: perkebunanLayer && map.hasLayer(perkebunanLayer),
+        perikanan: perikananLayer && map.hasLayer(perikananLayer)
     };
-    function styleStunting(feature) {
-        // ... (Kode fungsi styleStunting Anda tetap sama)
-        return { fillColor: getColorStunting(feature.properties.stunting_rate), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7 };
-    }
-
-    function onEachFeatureDefault(feature, layer) {
-        // ... (Kode fungsi onEachFeatureDefault Anda tetap sama)
-        layer.on('click', function (e) {
-            showLayerPanel(feature.properties);
-            const popupContentHtml = createPopupContent(feature.properties);
-            L.popup({ maxWidth: 350 })
-                .setLatLng(e.latlng)
-                .setContent(popupContentHtml)
-                .openOn(map);
-        });
-    }
-
-    // --- PETERNAKAN ---
-    function getColorPeternakan(featureProperties) {
-        // ... (Kode fungsi getColorPeternakan Anda tetap sama)
-        const data = featureProperties.categories && featureProperties.categories.Peternakan;
-        if (!data || data.length === 0) return '#E0E0E0';
-        const utama = data[0].name.toLowerCase();
-        if (utama.includes('itik') || utama.includes('ayam')) return 'yellow';
-        else if (utama.includes('sapi') || utama.includes('kerbau') || utama.includes('kambing')) return 'brown';
-        return 'lightpink';
-    }
-    function stylePeternakan(feature) {
-        // ... (Kode fungsi stylePeternakan Anda tetap sama)
-        return { fillColor: getColorPeternakan(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7 };
-    }
-
-    // --- PERTANIAN ---
-    function getColorPertanian(featureProperties) {
-        // ... (Kode fungsi getColorPertanian Anda tetap sama)
-        const data = featureProperties.categories && featureProperties.categories.Pertanian;
-        if (!data || data.length === 0) return '#E0E0E0';
-        return '#90EE90';
-    }
-    function stylePertanian(feature) {
-        // ... (Kode fungsi stylePertanian Anda tetap sama)
-        return { fillColor: getColorPertanian(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
-    }
-
-    // --- PERKEBUNAN ---
-    function getColorPerkebunan(featureProperties) {
-        // ... (Kode fungsi getColorPerkebunan Anda tetap sama)
-        const data = featureProperties.categories && featureProperties.categories.Perkebunan;
-        if (!data || data.length === 0) return '#E0E0E0';
-        return '#8B4513';
-    }
-    function stylePerkebunan(feature) {
-        // ... (Kode fungsi stylePerkebunan Anda tetap sama)
-        return { fillColor: getColorPerkebunan(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
-    }
-
-    // --- PERIKANAN ---
-    function getColorPerikanan(featureProperties) {
-        // ... (Kode fungsi getColorPerikanan Anda tetap sama)
-        const data = featureProperties.categories && featureProperties.categories.Perikanan;
-        if (!data || data.length === 0) return '#E0E0E0';
-        return 'blue';
-    }
-    function stylePerikanan(feature) {
-        // ... (Kode fungsi stylePerikanan Anda tetap sama)
-        return { fillColor: getColorPerikanan(feature.properties), weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
-    }
-
-    // --- FUNGSI UNTUK MENGATUR VISIBILITAS LEGENDA ---
-    function updateVisibleLegends() {
-        if (!legends) { // Pastikan legends sudah diinisialisasi
-            console.warn("Objek 'legends' belum diinisialisasi saat updateVisibleLegends dipanggil.");
-            return;
-        }
-
-        const layerDisplayStatus = {
-            stunting: map.hasLayer(stuntingLayer),
-            peternakan: map.hasLayer(peternakanLayer),
-            pertanian: map.hasLayer(pertanianLayer),
-            perkebunan: map.hasLayer(perkebunanLayer),
-            perikanan: map.hasLayer(perikananLayer)
-        };
-
-        for (const key in legends) {
-            if (legends[key]) { // Pastikan elemen legenda ada
-                if (layerDisplayStatus[key]) {
-                    legends[key].style.display = 'block';
-                } else {
-                    legends[key].style.display = 'none';
-                }
-            }
+    for (const key in legends) {
+        if (legends[key]) {
+            legends[key].style.display = layerDisplayStatus[key] ? 'block' : 'none';
         }
     }
-
-
-    // --- Memuat Data GeoJSON dan Membuat Layer ---
-    fetch('data/coba.geojson')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status} untuk ${response.url}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("GeoJSON data loaded successfully");
-            geojsonData = data;
-            kabupatenDataForSearch = geojsonData.features.map(feature => {
-                let centroid;
-                try {
-                    if (feature.properties.WADMKK === "Gresik") centroid = [-7.155, 112.565];
-                    else if (feature.properties.WADMKK === "Situbondo") centroid = [-7.706, 114.009];
-                    else if (feature.properties.WADMKK === "Sumenep") centroid = [-7.000, 113.875];
-                    else if (feature.geometry && typeof turf !== 'undefined' && turf.pointOnFeature) {
-                        const point = turf.pointOnFeature(feature);
-                        centroid = [point.geometry.coordinates[1], point.geometry.coordinates[0]];
-                    } else if (feature.geometry) {
-                        if (feature.geometry.type === "Point") centroid = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
-                        else if (feature.geometry.type === "MultiPolygon" && feature.geometry.coordinates[0][0][0]) centroid = [feature.geometry.coordinates[0][0][0][1], feature.geometry.coordinates[0][0][0][0]];
-                        else if (feature.geometry.type === "Polygon" && feature.geometry.coordinates[0][0]) centroid = [feature.geometry.coordinates[0][0][1],feature.geometry.coordinates[0][0][0]];
-                        else { centroid = [-7.5, 111.5]; console.warn("Fallback centroid for:", feature.properties.WADMKK); }
-                    } else {
-                        centroid = [-7.5, 111.5]; console.warn("No geometry for:", feature.properties.WADMKK);
-                    }
-                } catch(e) {
-                    console.error("Error calculating centroid for " + feature.properties.WADMKK + ": ", e);
-                    centroid = [-7.5, 111.5];
-                }
-                return {
-                    name: feature.properties.WADMKK, province: feature.properties.WADMPR,
-                    stunting_rate: feature.properties.stunting_rate, main_commodity: feature.properties.main_commodity,
-                    icon_image: feature.properties.icon_image, coords: centroid,
-                    categories: feature.properties.categories || {}
-                };
-            });
-
-            stuntingLayer = L.geoJson(geojsonData, { style: styleStunting, onEachFeature: onEachFeatureDefault });
-            peternakanLayer = L.geoJson(geojsonData, { style: stylePeternakan, onEachFeature: onEachFeatureDefault });
-            pertanianLayer = L.geoJson(geojsonData, { style: stylePertanian, onEachFeature: onEachFeatureDefault });
-            perkebunanLayer = L.geoJson(geojsonData, { style: stylePerkebunan, onEachFeature: onEachFeatureDefault });
-            perikananLayer = L.geoJson(geojsonData, { style: stylePerikanan, onEachFeature: onEachFeatureDefault });
-
-            // Layer default yang aktif
-            stuntingLayer.addTo(map); 
-
-            // HAPUS KONTROL LAYER LEAFLET DEFAULT
-            // var overlayMaps = { ... };
-            // L.control.layers(null, overlayMaps, ...).addTo(map);
-
-            // Inisialisasi objek legends
-            legends = {
-                stunting: document.getElementById('legendaGroupStunting'),
-                peternakan: document.getElementById('legendaGroupPeternakan'),
-                pertanian: document.getElementById('legendaGroupPertanian'),
-                perkebunan: document.getElementById('legendaGroupPerkebunan'),
-                perikanan: document.getElementById('legendaGroupPerikanan')
-            };
-
-            // --- LOGIKA UNTUK KONTROL LAYER KUSTOM ---
-        const customLayerControlPanel = document.getElementById('customLayerControl');
-        const customLayerControlCheckboxes = document.querySelectorAll('#customLayerControl input[type="checkbox"]');
-        const closeCustomLayerControlButton = document.getElementById('closeCustomLayerControl');
-        const toggleLayerControlButton = document.getElementById('toggleLayerControlButton');
-
-        const layerMapping = {
-            'stunting': stuntingLayer,
-            'peternakan': peternakanLayer,
-            'pertanian': pertanianLayer,
-            'perkebunan': perkebunanLayer,
-            'perikanan': perikananLayer
-        };
-
-        // Fungsi untuk menambah/menghapus layer dan mengupdate legenda
-        function updateMapLayersAndLegends() {
-            customLayerControlCheckboxes.forEach(cb => {
-                const layerName = cb.dataset.layerName;
-                const layer = layerMapping[layerName];
-                if (layer) {
-                    if (cb.checked) {
-                        if (!map.hasLayer(layer)) {
-                            map.addLayer(layer);
-                        }
-                    } else {
-                        if (map.hasLayer(layer)) {
-                            map.removeLayer(layer);
-                        }
-                    }
-                }
-            });
-            updateVisibleLegends(); // Panggil fungsi update legenda
-        }
-
-
-        // Modifikasi event listener untuk checkbox
-        customLayerControlCheckboxes.forEach(checkbox => {
-            // Inisialisasi status centang awal (hanya satu yang aktif, misal stunting)
-            const layerName = checkbox.dataset.layerName;
-            const layer = layerMapping[layerName];
-            // Awalnya hanya stuntingLayer yang aktif dan tercentang
-            if (layerName === 'stunting' && layer && map.hasLayer(layer)) {
-                checkbox.checked = true;
-            } else {
-                checkbox.checked = false;
-                // Pastikan layer lain tidak ada di peta jika tidak tercentang
-                if (layer && map.hasLayer(layer)) {
-                    map.removeLayer(layer);
-                }
-            }
-
-            checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    // Jika checkbox ini dicentang, uncheck semua checkbox lain
-                    customLayerControlCheckboxes.forEach(otherCb => {
-                        if (otherCb !== this) {
-                            otherCb.checked = false;
-                        }
-                    });
-                }
-                // Setelah status checkbox diatur, perbarui layer di peta dan legenda
-                updateMapLayersAndLegends();
-            });
-        });
-
-        // Panggil updateMapLayersAndLegends sekali di awal untuk sinkronisasi
-        updateMapLayersAndLegends();
-
-
-        if (closeCustomLayerControlButton && customLayerControlPanel) {
-            // ... (logika tombol close tetap sama) ...
-            closeCustomLayerControlButton.addEventListener('click', function() {
-                customLayerControlPanel.style.display = 'none';
-            });
-        }
-        
-        if (toggleLayerControlButton && customLayerControlPanel) {
-            // ... (logika tombol toggle panel tetap sama) ...
-            toggleLayerControlButton.addEventListener('click', function() {
-                if (customLayerControlPanel.style.display === 'none' || customLayerControlPanel.style.display === '') {
-                    customLayerControlPanel.style.display = 'block';
-                } else {
-                    customLayerControlPanel.style.display = 'none';
-                }
-            });
-        } else {
-            console.warn("Tombol toggleLayerControlButton atau customLayerControlPanel tidak ditemukan.");
-        }
-            updateVisibleLegends(); // Panggil untuk state awal legenda
-
-            // HAPUS event listener map.on('overlayadd'/'overlayremove') yang lama untuk legenda
-            // karena sekarang dikontrol oleh checkbox kustom dan updateVisibleLegends()
-            // map.on('overlayadd', function(e) { ... }); // HAPUS
-            // map.on('overlayremove', function(e) { ... }); // HAPUS
-            // HAPUS fungsi hideAllDataLegends() jika ada
-
-        })
-        .catch(error => {
-            console.error('GAGAL MEMUAT GEOJSON atau ADA ERROR SETELAHNYA:', error);
-            const mapDiv = document.getElementById('map');
-            if (mapDiv) {
-                mapDiv.innerHTML = '<p style="text-align:center; padding-top:50px; color:red;">Gagal memuat data peta. Silakan periksa konsol (F12) untuk detail.</p>';
-            }
-        });
-
-  // js/peta.js
-// ... (kode Anda yang lain) ...
-
-// --- Fungsi Panel Informasi (MODIFIED: Hapus teks info stunting, grafik tetap) ---
+}
 function showLayerPanel(properties) {
     const panel = document.getElementById('layerPanel');
-    const contentDiv = document.getElementById('layerContent'); // Pastikan variabel ini 'contentDiv'
+    const contentDiv = document.getElementById('layerContent');
     if (!panel || !contentDiv) {
         console.error("Elemen panel atau contentDiv tidak ditemukan!");
         return;
     }
     panel.style.display = 'block';
     const namaKabupaten = properties.WADMKK || 'Tidak Diketahui';
-
-    // Bangun HTML dasar untuk panel (Nama Kabupaten, Provinsi)
     let panelHtml = `<h3>${namaKabupaten}</h3>
                      <p>Provinsi: ${properties.WADMPR || '-'}</p>`;
-
-    let dataDisplayedInPanel = false; // Untuk melacak apakah ada data kategori yang ditampilkan
-
-    // --- HAPUS BAGIAN INI UNTUK INFO TEKS STUNTING ---
-    /*
-    if (map.hasLayer(stuntingLayer) && typeof properties.stunting_rate !== 'undefined') {
-        panelHtml += `<hr><div><strong>Tingkat Stunting:</strong> ${properties.stunting_rate}%`;
-        if (properties.main_commodity) {
-            panelHtml += `<br>Komoditas Utama Umum: ${properties.main_commodity}`;
-        }
-        panelHtml += `</div>`;
-        // dataDisplayedInPanel = true; // Jangan set true di sini agar pesan "Tidak ada data" muncul jika hanya stunting aktif
-    }
-    */
-    // --- AKHIR BAGIAN YANG DIHAPUS ---
-
-
-    // Daftar kategori untuk panel (Peternakan, Pertanian, dll.)
+    let dataDisplayedInPanel = false;
     const categoriesToShowInPanel = {
         'Peternakan': { layer: peternakanLayer, key: 'Peternakan' },
         'Pertanian': { layer: pertanianLayer, key: 'Pertanian' },
         'Perkebunan': { layer: perkebunanLayer, key: 'Perkebunan' },
         'Perikanan': { layer: perikananLayer, key: 'Perikanan' }
     };
-
     for (const categoryName in categoriesToShowInPanel) {
         const catInfo = categoriesToShowInPanel[categoryName];
-        if (map.hasLayer(catInfo.layer)) { // Cek jika layer aktif
+        if (catInfo.layer && map.hasLayer(catInfo.layer)) {
             panelHtml += `<hr><div><strong>Komoditas ${categoryName}:</strong>`;
             if (properties.categories && properties.categories[catInfo.key] && properties.categories[catInfo.key].length > 0) {
-                panelHtml += '<ul style="padding-left: 20px;">'; // Anda sudah punya ini untuk indentasi
+                panelHtml += '<ul style="padding-left: 20px;">';
                 properties.categories[catInfo.key].forEach(item => {
                     panelHtml += `<li>${item.name}: ${item.value}</li>`;
                 });
@@ -388,51 +204,34 @@ function showLayerPanel(properties) {
             dataDisplayedInPanel = true;
         }
     }
-    
-    // Pesan jika tidak ada data dari layer kategori aktif
-    // dan layer stunting juga tidak aktif (karena grafik stunting akan tetap muncul jika layer stunting aktif)
-    if (!dataDisplayedInPanel && !map.hasLayer(stuntingLayer)) { 
-         panelHtml += '<p style="margin-top:10px;"><em>Tidak ada data dari layer aktif untuk ditampilkan di panel ini.</em></p>';
-    } else if (!dataDisplayedInPanel && map.hasLayer(stuntingLayer) && typeof properties.stunting_rate === 'undefined') {
-        // Jika hanya layer stunting aktif tapi tidak ada data stunting rate untuk grafik
+    if (!dataDisplayedInPanel && (!stuntingLayer || !map.hasLayer(stuntingLayer))) {
+         panelHtml += '<p style="margin-top:10px;"><em>Pilih layer data untuk menampilkan informasi.</em></p>';
+    } else if (!dataDisplayedInPanel && stuntingLayer && map.hasLayer(stuntingLayer) && typeof properties.stunting_rate === 'undefined') {
         panelHtml += '<p style="margin-top:10px;"><em>Data komoditas lain tidak aktif.</em></p>';
     }
-
-
-    contentDiv.innerHTML = panelHtml; // Set HTML utama panel
-
-    // Tombol Close (tetap ada)
+    contentDiv.innerHTML = panelHtml;
     const oldCloseBtn = panel.querySelector('.close-btn');
     if (oldCloseBtn) oldCloseBtn.remove();
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '×';
     closeButton.className = 'close-btn';
     closeButton.onclick = function () { panel.style.display = 'none'; };
-    panel.appendChild(closeButton); // Tambahkan ke panel, bukan contentDiv
-
-    // Logika Chart Stunting (TETAP ADA dan SELALU DITAMPILKAN JIKA LAYER STUNTING AKTIF)
+    panel.appendChild(closeButton);
     let chartContainer = panel.querySelector('#chartContainer');
-    if (map.hasLayer(stuntingLayer)) { // Hanya tampilkan/update chart jika layer stunting aktif
-        // Di dalam showLayerPanel, modifikasi pembuatan chartContainer:
-
+    if (stuntingLayer && map.hasLayer(stuntingLayer)) {
         if (!chartContainer) {
             chartContainer = document.createElement('div');
             chartContainer.id = 'chartContainer';
-            // Kurangi margin-top pada <p> atau hilangkan jika tidak perlu spasi ekstra di atas judul
-            chartContainer.innerHTML = `<p style="margin-top: -10px; margin-bottom: 6px;"><strong>Grafik Stunting</strong></p><canvas id="stuntingChart"></canvas>`; // Kurangi margin-top di sini
-            // Kurangi margin-top pada style chartContainer
-            chartContainer.style = 'margin-top: -1px; width: 90%; height: 250px; background: white; padding: 10px; border-radius: 5px;'; // Kurangi margin-top di sini juga
-            contentDiv.appendChild(chartContainer); 
+            chartContainer.innerHTML = `<p style="margin-top: -10px; margin-bottom: 6px;"><strong>Grafik Stunting</strong></p><canvas id="stuntingChart"></canvas>`;
+            chartContainer.style = 'margin-top: -1px; width: 90%; height: 250px; background: white; padding: 10px; border-radius: 5px;';
+            contentDiv.appendChild(chartContainer);
         }
-        chartContainer.style.display = 'block'; // Pastikan ini ada untuk menampilkan kembali jika sebelumnya disembunyikan
-
-        // ... (sisa logika chart)
-
+        chartContainer.style.display = 'block';
         const stuntingRateForChart = parseFloat(properties.stunting_rate);
         if (properties.stunting_rate !== undefined && !isNaN(stuntingRateForChart)) {
              updateChart([{ name: namaKabupaten, stunting_rate: stuntingRateForChart }]);
         } else {
-            const chartCanvas = document.getElementById('stuntingChart'); 
+            const chartCanvas = document.getElementById('stuntingChart');
             if(chartCanvas) {
                 const ctxChart = chartCanvas.getContext('2d');
                 if (stuntingChart) stuntingChart.destroy();
@@ -444,7 +243,6 @@ function showLayerPanel(properties) {
             }
         }
     } else {
-        // Jika layer stunting tidak aktif, sembunyikan chart dan hancurkan instance
         if (chartContainer) chartContainer.style.display = 'none';
         if (stuntingChart) {
             stuntingChart.destroy();
@@ -452,111 +250,452 @@ function showLayerPanel(properties) {
         }
     }
 }
+function updateChart(data) {
+    const chartCanvas = document.getElementById('stuntingChart');
+    if (!chartCanvas) { console.error("Canvas stuntingChart tidak ditemukan!"); return; }
+    const ctx = chartCanvas.getContext('2d');
+    if (stuntingChart) stuntingChart.destroy();
+    stuntingChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Rata-Rata Jatim', ...data.map(d => d.name)],
+            datasets: [{
+                label: 'Tingkat Stunting (%)',
+                data: [19.13, ...data.map(d => parseFloat(d.stunting_rate) || 0)],
+                backgroundColor: ['rgba(0, 0, 255, 0.7)', ...data.map(d => getColorStunting(d.stunting_rate))],
+                borderColor: ['rgba(0, 0, 255, 1)', ...data.map(d => {
+                    const color = getColorStunting(d.stunting_rate);
+                    if (color === 'red') return 'rgba(255,0,0,1)';
+                    if (color === 'orange') return 'rgba(255,165,0,1)';
+                    if (color === 'green') return 'rgba(0,128,0,1)';
+                    if (color === '#CCCCCC') return 'rgba(204, 204, 204, 1)';
+                    if (typeof color === 'string' && color.startsWith('rgba')) {
+                        return color.replace(/,(\s*\d?\.?\d+)\)/, ', 1)');
+                    }
+                    return color;
+                })],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false, plugins: { legend: { display: false } },
+            responsive: true, scales: { y: { beginAtZero: true, max: 40 } }
+        }
+    });
+}
 
-// ... (sisa kode Anda, termasuk fungsi updateChart, createPopupContent, dll., tetap sama) ...
-    // --- Fungsi updateChart ---
-    let stuntingChart = null; // Sudah didefinisikan di atas, ini redundan
-    function updateChart(data) {
-        // ... (Kode fungsi updateChart Anda tetap sama)
-        const chartCanvas = document.getElementById('stuntingChart');
-        if (!chartCanvas) { console.error("Canvas stuntingChart tidak ditemukan!"); return; }
-        const ctx = chartCanvas.getContext('2d');
-        if (stuntingChart) stuntingChart.destroy();
-        stuntingChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Rata-Rata Jatim', ...data.map(d => d.name)],
-                datasets: [{
-                    label: 'Tingkat Stunting (%)',
-                    data: [19.13, ...data.map(d => d.stunting_rate)],
-                    backgroundColor: ['rgba(0, 0, 255, 0.7)', ...data.map(d => getColorStunting(d.stunting_rate))],
-                    borderColor: ['rgba(0, 0, 255, 1)', ...data.map(d => {
-                        const color = getColorStunting(d.stunting_rate);
-                        if (color === 'red') return 'rgba(255,0,0,1)';
-                        if (color === 'orange') return 'rgba(255,165,0,1)';
-                        if (color === 'green') return 'rgba(0,128,0,1)';
-                        return color.replace('0.7', '1');
-                    })],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                maintainAspectRatio: false, plugins: { legend: { display: false } },
-                responsive: true, scales: { y: { beginAtZero: true, max: 40 } }
+
+// Fungsi utama yang akan dipanggil setelah DOM siap atau setelah data GeoJSON dimuat
+function initializeApplication() {
+    // --- PENGECEKAN ELEMEN DOM UTAMA ---
+    const mapDiv = document.getElementById('map');
+    const customLayerControlPanel = document.getElementById('customLayerControl');
+    const toggleLayerControlButton = document.getElementById('toggleLayerControlButton');
+    const basemapGalleryPanel = document.getElementById('basemapGalleryPanel');
+    const toggleBasemapGalleryButton = document.getElementById('toggleBasemapGalleryButton');
+    const closeCustomLayerControlButton = document.getElementById('closeCustomLayerControl');
+    const closeBasemapGalleryButton = document.getElementById('closeBasemapGalleryButton');
+    let domError = false;
+    if (!mapDiv) { console.error("Elemen #map tidak ditemukan!"); domError = true; }
+    if (!customLayerControlPanel) { console.error("Elemen #customLayerControl tidak ditemukan!"); domError = true; }
+    if (!toggleLayerControlButton) { console.error("Elemen #toggleLayerControlButton tidak ditemukan!"); domError = true; }
+    if (!basemapGalleryPanel) { console.error("Elemen #basemapGalleryPanel tidak ditemukan!"); domError = true; }
+    if (!toggleBasemapGalleryButton) { console.error("Elemen #toggleBasemapGalleryButton tidak ditemukan!"); domError = true; }
+    if (!closeCustomLayerControlButton) { console.error("Elemen #closeCustomLayerControl tidak ditemukan!"); domError = true; }
+    if (!closeBasemapGalleryButton) { console.error("Elemen #closeBasemapGalleryButton tidak ditemukan!"); domError = true; }
+    if (domError) {
+        if (mapDiv) mapDiv.innerHTML = '<p style="text-align:center; padding-top:50px; color:red;">Error: Elemen DOM penting tidak ditemukan. Periksa ID di HTML.</p>';
+        return;
+    }
+
+   // Di dalam fungsi initializeApplication()
+
+    // --- LOGIKA KONTROL LAYER (DENGAN CHECKBOX MASTER KOMODITAS) ---
+    const layerMapping = {
+        'stunting': stuntingLayer, 'peternakan': peternakanLayer, 'pertanian': pertanianLayer,
+        'perkebunan': perkebunanLayer, 'perikanan': perikananLayer
+    };
+
+    const allIndividualLayerCheckboxes = document.querySelectorAll('#customLayerControl .layer-label-text input[type="checkbox"]:not([data-is-master="true"])');
+    const komoditasMasterCheckbox = document.getElementById('komoditasMasterCheckbox');
+    const komoditasChildCheckboxes = document.querySelectorAll('.komoditas-child-checkbox');
+    const stuntingCheckbox = document.querySelector('input[data-layer-name="stunting"]');
+
+    function updateMapAndLegendsFromCheckboxes() {
+        allIndividualLayerCheckboxes.forEach(cb => {
+            const layerName = cb.dataset.layerName;
+            if (!layerName) return; 
+            const layer = layerMapping[layerName];
+            if (layer) {
+                if (cb.checked) {
+                    if (!map.hasLayer(layer)) map.addLayer(layer);
+                } else {
+                    if (map.hasLayer(layer)) map.removeLayer(layer);
+                }
+            }
+        });
+        updateVisibleLegends();
+        syncKomoditasMasterCheckboxState();
+    }
+
+    function syncKomoditasMasterCheckboxState() {
+        if (!komoditasMasterCheckbox) return;
+        let anyChildChecked = false;
+        komoditasChildCheckboxes.forEach(childCb => {
+            if (childCb.checked) {
+                anyChildChecked = true;
+            }
+        });
+        // Hanya set master checked jika ada anak yang tercentang DAN stunting tidak tercentang
+        // atau jika tidak ada stunting checkbox sama sekali
+        const stuntingIsChecked = stuntingCheckbox ? stuntingCheckbox.checked : false;
+        komoditasMasterCheckbox.checked = anyChildChecked && !stuntingIsChecked;
+    }
+
+    // Event listener untuk semua checkbox layer INDIVIDUAL (Stunting dan anak-anak Komoditas)
+    allIndividualLayerCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Jika yang dicentang adalah STUNTING
+                if (this === stuntingCheckbox) {
+                    if (komoditasMasterCheckbox) komoditasMasterCheckbox.checked = false; // Uncheck master komoditas
+                    komoditasChildCheckboxes.forEach(childCb => childCb.checked = false); // Uncheck semua anak komoditas
+                }
+                // Jika yang dicentang adalah ANAK KOMODITAS
+                else if (Array.from(komoditasChildCheckboxes).includes(this)) {
+                    if (stuntingCheckbox) stuntingCheckbox.checked = false; // Uncheck stunting
+                    // Uncheck anak komoditas LAINNYA (mempertahankan satu anak komoditas aktif jika diklik individual)
+                    komoditasChildCheckboxes.forEach(otherChildCb => {
+                        if (otherChildCb !== this) {
+                            otherChildCb.checked = false;
+                        }
+                    });
+                }
+            }
+            // Jika checkbox di-uncheck, master komoditas akan di-update oleh syncKomoditasMasterCheckboxState
+            updateMapAndLegendsFromCheckboxes();
+        });
+    });
+
+    // Event listener untuk checkbox MASTER KOMODITAS
+    if (komoditasMasterCheckbox) {
+        komoditasMasterCheckbox.addEventListener('change', function() {
+            const isMasterNowChecked = this.checked;
+
+            if (isMasterNowChecked) {
+                // Jika master BARU SAJA DICENTANG:
+                // 1. Uncheck stunting
+                if (stuntingCheckbox) stuntingCheckbox.checked = false;
+
+                // 2. Centang SEMUA anak komoditas
+                //    Namun, untuk menjaga konsistensi "satu layer aktif" saat interaksi awal dari master,
+                //    kita akan centang anak pertama dan pastikan yang lain tidak tercentang.
+                //    Jika Anda benar-benar ingin SEMUA anak tercentang dan SEMUA layer anak tampil,
+                //    maka logika "satu layer aktif" di event listener anak perlu dipertimbangkan ulang.
+                //    Untuk saat ini, kita buat master mencentang SEMUA anak, lalu fungsi update
+                //    akan menerapkan layer sesuai state checkbox tersebut.
+                komoditasChildCheckboxes.forEach((childCb, index) => {
+                    // **PERUBAHAN DI SINI: Centang semua anak jika master dicentang**
+                    childCb.checked = true;
+                });
+
+                // Jika tidak ada anak komoditas, master tidak seharusnya bisa dicentang
+                if (komoditasChildCheckboxes.length === 0) {
+                    this.checked = false; // Batalkan centang master jika tidak ada anak
+                }
+            } else {
+                // Jika master BARU SAJA DI-UNCHECK, uncheck semua anaknya
+                komoditasChildCheckboxes.forEach(childCb => {
+                    childCb.checked = false;
+                });
+            }
+            updateMapAndLegendsFromCheckboxes(); // Update peta dan legenda berdasarkan state checkbox baru
+        });
+    }
+
+    // Initial state setup
+    if (stuntingCheckbox) {
+        // Stunting aktif jika layer stunting ada dan sudah ditambahkan ke peta (default)
+        stuntingCheckbox.checked = (stuntingLayer && map.hasLayer(stuntingLayer));
+    }
+    komoditasChildCheckboxes.forEach(cb => cb.checked = false); // Anak komoditas awalnya tidak aktif
+    syncKomoditasMasterCheckboxState(); // Sinkronkan master berdasarkan anak dan stunting
+    updateMapAndLegendsFromCheckboxes(); // Terapkan layer ke peta dan update legenda awal
+
+// ... sisa dari fungsi initializeApplication() Anda tetap sama ...
+// (Tombol Tutup dan Toggle Panel Layer, LOGIKA DROPDOWN LEGENDA, LOGIKA GRUP LAYER KOMODITAS (Toggle Expand/Collapse), LOGIKA GALERI BASEMAP, dll.)
+
+    // --- Tombol Tutup dan Toggle Panel Layer ---
+    if (closeCustomLayerControlButton && customLayerControlPanel) {
+        closeCustomLayerControlButton.addEventListener('click', () => customLayerControlPanel.style.display = 'none');
+    }
+    if (toggleLayerControlButton && customLayerControlPanel) {
+        toggleLayerControlButton.addEventListener('click', () => {
+            const isHidden = customLayerControlPanel.style.display === 'none' || customLayerControlPanel.style.display === '';
+            customLayerControlPanel.style.display = isHidden ? 'block' : 'none';
+            if (basemapGalleryPanel && isHidden && basemapGalleryPanel.style.display !== 'none') {
+                basemapGalleryPanel.style.display = 'none';
             }
         });
     }
 
-    // --- Fungsi Pencarian Kustom ---
-    // ... (Kode fungsi pencarian kustom Anda tetap sama)
-    const searchContainer = document.createElement('div');
-    searchContainer.style = 'position: fixed; top: 85px; right: 20px; z-index: 1000; width: 330px;display: flex; flex-direction: column; align-items: center;';
-    const searchInputGroup = document.createElement('div');
-    searchInputGroup.style = 'position: relative; width: 100%;';
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text'; searchInput.placeholder = 'Cari Kabupaten/Kota Jawa Timur...';
-    searchInput.style = 'width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;';
-    const clearButton = document.createElement('span');
-    clearButton.innerHTML = '×';
-    clearButton.style = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; display: none; color: gray;';
-    const resultContainer = document.createElement('ul');
-    resultContainer.className = 'search-results';
-    resultContainer.style = 'width: 100%; background: white; list-style: none; padding: 0; margin: 0; border: 1px solid #ccc; border-top: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 4px 4px; display:none; box-sizing: border-box;';
-    searchInputGroup.appendChild(searchInput); searchInputGroup.appendChild(clearButton);
-    searchContainer.appendChild(searchInputGroup); searchContainer.appendChild(resultContainer);
-    document.body.appendChild(searchContainer);
+    // --- LOGIKA DROPDOWN LEGENDA (UNTUK SETIAP LAYER ITEM) ---
+    const layerItemsWithLegend = document.querySelectorAll('.custom-layer-control-body .layer-item-with-legend');
+    function updateArrowIcon(toggleBtn, legendContentPanel) {
+        if (!toggleBtn) return;
+        const arrowSpan = toggleBtn.querySelector('.toggle-arrow');
+        if (!arrowSpan) return;
+        if (!legendContentPanel) {
+            arrowSpan.textContent = '▸';
+            return;
+        }
+        const isLegendaExpanded = legendContentPanel.style.display === 'block';
+        arrowSpan.textContent = isLegendaExpanded ? '▾' : '▸';
+    }
 
-    searchInput.addEventListener('input', function () {
-        const query = this.value.toLowerCase(); resultContainer.innerHTML = '';
-        clearButton.style.display = query ? 'block' : 'none';
-        resultContainer.style.display = query ? 'block' : 'none';
-        if (query && kabupatenDataForSearch.length > 0) {
-            const filteredKab = kabupatenDataForSearch.filter(kabupaten => kabupaten.name.toLowerCase().includes(query));
-            if (filteredKab.length > 0) {
-                filteredKab.forEach(kabupaten => {
-                    const li = document.createElement('li'); li.textContent = kabupaten.name;
-                    li.style = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;';
-                    li.onmouseover = function() { this.style.backgroundColor = '#f0f0f0'; };
-                    li.onmouseout = function() { this.style.backgroundColor = 'white'; };
-                    li.addEventListener('click', () => {
-                        if (!kabupaten.coords || typeof kabupaten.coords[0] === 'undefined' || typeof kabupaten.coords[1] === 'undefined') {
-                            console.error("Koordinat tidak valid untuk:", kabupaten.name, kabupaten.coords);
-                            return;
-                        }
-                        map.setView(kabupaten.coords, 10);
-                        const originalFeatureProperties = geojsonData.features.find(f => f.properties.WADMKK === kabupaten.name)?.properties;
-                        if (originalFeatureProperties) {
-                            const popupContentHtml = createPopupContent(originalFeatureProperties);
-                            L.popup({ maxWidth: 350 })
-                            .setLatLng(kabupaten.coords)
-                            .setContent(popupContentHtml)
-                            .openOn(map);
-                            showLayerPanel(originalFeatureProperties);
-                        }
-                        resultContainer.style.display = 'none'; searchInput.value = kabupaten.name; clearButton.style.display = 'block';
-                    });
-                    resultContainer.appendChild(li);
-                });
-            } else {
-                const noResultLi = document.createElement('li'); noResultLi.textContent = 'Tidak ada hasil ditemukan';
-                noResultLi.style = 'padding: 10px; color: grey; text-align: center;'; resultContainer.appendChild(noResultLi);
+    layerItemsWithLegend.forEach(item => {
+        const toggleBtn = item.querySelector('.legend-toggle-btn');
+        const legendContentPanel = item.querySelector('.legend-content-panel');
+        const checkbox = item.querySelector('input[type="checkbox"]'); // Checkbox di dalam item ini
+
+        // Hanya proses jika ada checkbox dan tombol panah
+        if (!toggleBtn || !checkbox) return;
+        
+        // Hanya proses jika ada panel legenda yang terkait dengan item ini
+        if (legendContentPanel) {
+            // Ambil legendGroupId dari checkbox di dalam item ini
+            const legendGroupId = checkbox.dataset.legendGroupId;
+            if (!legendGroupId) { // Jika tidak ada legendGroupId, mungkin sembunyikan tombol
+                toggleBtn.style.visibility = 'hidden';
+                legendContentPanel.style.display = 'none';
+                return;
             }
-        } else if (!query) {
-            resultContainer.style.display = 'none';
-        }
-    });
-    clearButton.addEventListener('click', function () {
-        searchInput.value = ''; resultContainer.innerHTML = '';
-        resultContainer.style.display = 'none'; clearButton.style.display = 'none'; searchInput.focus();
-    });
-    document.addEventListener('click', function(event) {
-        if (searchContainer && !searchContainer.contains(event.target)) {
-            if(resultContainer) resultContainer.style.display = 'none';
-        }
-    });
-    searchInput.addEventListener('focus', function() {
-        if (this.value && resultContainer && resultContainer.childNodes.length > 0) {
-            resultContainer.style.display = 'block';
+
+            updateArrowIcon(toggleBtn, legendContentPanel);
+            const sourceLegendGroup = document.getElementById(legendGroupId);
+            if (sourceLegendGroup) {
+                legendContentPanel.innerHTML = sourceLegendGroup.innerHTML;
+            } else {
+                toggleBtn.style.visibility = 'hidden';
+                legendContentPanel.style.display = 'none';
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                const isExpanded = legendContentPanel.style.display === 'block';
+                legendContentPanel.style.display = isExpanded ? 'none' : 'block';
+                toggleBtn.setAttribute('aria-expanded', String(!isExpanded));
+                updateArrowIcon(toggleBtn, legendContentPanel);
+            });
+        } else {
+            toggleBtn.style.visibility = 'hidden';
         }
     });
 
+    // --- LOGIKA GRUP LAYER KOMODITAS (Toggle Expand/Collapse) ---
+    const groupToggleButtons = document.querySelectorAll('.group-toggle-btn');
+    groupToggleButtons.forEach(button => {
+        const groupContentId = button.getAttribute('aria-controls');
+        const groupContentPanel = document.getElementById(groupContentId);
+        const arrowSpan = button.querySelector('.toggle-arrow');
+
+        if (groupContentPanel && arrowSpan) {
+            function updateGroupArrowIcon() {
+                const isExpanded = groupContentPanel.style.display === 'block';
+                arrowSpan.textContent = isExpanded ? '▾' : '▸';
+            }
+            updateGroupArrowIcon();
+
+            const groupHeader = button.closest('.layer-group-header');
+            if (groupHeader) {
+                groupHeader.addEventListener('click', (event) => {
+                    // Cek apakah target klik adalah checkbox master atau labelnya
+                    const masterLabel = groupHeader.querySelector('.group-master-label');
+                    if (masterLabel && masterLabel.contains(event.target)) {
+                        // Jika klik adalah pada checkbox master atau labelnya, jangan toggle grup.
+                        // Event change checkbox akan ditangani terpisah.
+                        return;
+                    }
+
+                    // Jika klik BUKAN pada checkbox/label master, baru toggle grup
+                    // Ini biasanya berarti klik pada tombol panah atau area kosong di header
+                    const isExpanded = groupContentPanel.style.display === 'block';
+                    groupContentPanel.style.display = isExpanded ? 'none' : 'block';
+                    button.setAttribute('aria-expanded', String(!isExpanded));
+                    updateGroupArrowIcon();
+                });
+            }
+        } else {
+            if (!groupContentPanel) console.error(`Group content panel with ID '${groupContentId}' not found.`);
+            if (!arrowSpan) console.error(`Arrow span not found in group toggle button for '${groupContentId}'.`);
+        }
+    });
+
+    // --- LOGIKA GALERI BASEMAP ---
+    if (toggleBasemapGalleryButton && basemapGalleryPanel && closeBasemapGalleryButton) {
+        toggleBasemapGalleryButton.addEventListener('click', () => {
+            const isPanelHidden = basemapGalleryPanel.style.display === 'none' || basemapGalleryPanel.style.display === '';
+            basemapGalleryPanel.style.display = isPanelHidden ? 'block' : 'none';
+            if (isPanelHidden) {
+                const galleryContent = basemapGalleryPanel.querySelector('.basemap-gallery-content');
+                if (galleryContent) galleryContent.style.display = 'flex';
+            }
+            if (customLayerControlPanel && isPanelHidden && customLayerControlPanel.style.display !== 'none') {
+                customLayerControlPanel.style.display = 'none';
+            }
+        });
+        closeBasemapGalleryButton.addEventListener('click', () => {
+            basemapGalleryPanel.style.display = 'none';
+        });
+        const basemapItems = document.querySelectorAll('#basemapGalleryPanel .basemap-item');
+        if (basemapItems.length > 0) {
+            basemapItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const selectedBasemapType = this.dataset.basemapType;
+                    if (selectedBasemapType) setBasemap(selectedBasemapType);
+                });
+            });
+        } else {
+             console.warn("Tidak ada .basemap-item yang ditemukan.");
+        }
+    } else {
+        console.error("Satu atau lebih elemen untuk galeri basemap tidak ditemukan!");
+    }
+
+    const defaultActiveBasemapItem = document.querySelector('.basemap-item[data-basemap-type="osmStandard"]');
+    if (defaultActiveBasemapItem) defaultActiveBasemapItem.classList.add('active');
+}
+
+
+// --- Memuat Data GeoJSON dan Membuat Layer ---
+fetch('data/coba.geojson')
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status} untuk ${response.url}`);
+        return response.json();
+    })
+    .then(data => {
+        console.log("GeoJSON data loaded successfully");
+        geojsonData = data;
+        kabupatenDataForSearch = geojsonData.features.map(feature => {
+            let centroid;
+            try {
+                if (feature.properties.WADMKK === "Gresik") centroid = [-7.155, 112.565];
+                else if (feature.properties.WADMKK === "Situbondo") centroid = [-7.706, 114.009];
+                else if (feature.properties.WADMKK === "Sumenep") centroid = [-7.000, 113.875];
+                else if (feature.geometry && typeof turf !== 'undefined' && turf.pointOnFeature) {
+                    const point = turf.pointOnFeature(feature);
+                    centroid = [point.geometry.coordinates[1], point.geometry.coordinates[0]];
+                } else if (feature.geometry) {
+                    if (feature.geometry.type === "Point") centroid = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
+                    else if (feature.geometry.type === "MultiPolygon" && feature.geometry.coordinates[0][0][0]) centroid = [feature.geometry.coordinates[0][0][0][1], feature.geometry.coordinates[0][0][0][0]];
+                    else if (feature.geometry.type === "Polygon" && feature.geometry.coordinates[0][0]) centroid = [feature.geometry.coordinates[0][0][1],feature.geometry.coordinates[0][0][0]];
+                    else { centroid = [-7.5, 111.5]; console.warn("Fallback centroid for:", feature.properties.WADMKK); }
+                } else {
+                    centroid = [-7.5, 111.5]; console.warn("No geometry for:", feature.properties.WADMKK);
+                }
+            } catch(e) {
+                console.error("Error calculating centroid for " + feature.properties.WADMKK + ": ", e);
+                centroid = [-7.5, 111.5];
+            }
+            return {
+                name: feature.properties.WADMKK, province: feature.properties.WADMPR,
+                stunting_rate: feature.properties.stunting_rate, main_commodity: feature.properties.main_commodity,
+                icon_image: feature.properties.icon_image, coords: centroid,
+                categories: feature.properties.categories || {}
+            };
+        });
+
+        stuntingLayer = L.geoJson(geojsonData, { style: styleStunting, onEachFeature: onEachFeatureDefault });
+        peternakanLayer = L.geoJson(geojsonData, { style: stylePeternakan, onEachFeature: onEachFeatureDefault });
+        pertanianLayer = L.geoJson(geojsonData, { style: stylePertanian, onEachFeature: onEachFeatureDefault });
+        perkebunanLayer = L.geoJson(geojsonData, { style: stylePerkebunan, onEachFeature: onEachFeatureDefault });
+        perikananLayer = L.geoJson(geojsonData, { style: stylePerikanan, onEachFeature: onEachFeatureDefault });
+
+        if (stuntingLayer) stuntingLayer.addTo(map); // Default layer
+
+        legends = {
+            stunting: document.getElementById('legendaGroupStunting'),
+            peternakan: document.getElementById('legendaGroupPeternakan'),
+            pertanian: document.getElementById('legendaGroupPertanian'),
+            perkebunan: document.getElementById('legendaGroupPerkebunan'),
+            perikanan: document.getElementById('legendaGroupPerikanan')
+        };
+
+        initializeApplication();
+    })
+    .catch(error => {
+        console.error('GAGAL MEMUAT GEOJSON atau ADA ERROR SETELAHNYA:', error);
+        const mapDiv = document.getElementById('map');
+        if (mapDiv) mapDiv.innerHTML = '<p style="text-align:center; padding-top:50px; color:red;">Gagal memuat data peta.</p>';
+        if (map && (!map.getCenter() || map.getZoom() === undefined )) map.setView([-7.5666, 112.2384], 8);
+    });
+
+// --- Fungsi Panel Informasi, Update Chart, Pencarian Kustom ---
+const searchContainer = document.createElement('div');
+searchContainer.style = 'position: fixed; top: 85px; right: 20px; z-index: 1000; width: 330px;display: flex; flex-direction: column; align-items: center;';
+const searchInputGroup = document.createElement('div');
+searchInputGroup.style = 'position: relative; width: 100%;';
+const searchInput = document.createElement('input');
+searchInput.type = 'text'; searchInput.placeholder = 'Cari Kabupaten/Kota Jawa Timur...';
+searchInput.style = 'width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;';
+const clearButton = document.createElement('span');
+clearButton.innerHTML = '×';
+clearButton.style = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; display: none; color: gray;';
+const resultContainer = document.createElement('ul');
+resultContainer.className = 'search-results';
+resultContainer.style = 'width: 100%; background: white; list-style: none; padding: 0; margin: 0; border: 1px solid #ccc; border-top: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 4px 4px; display:none; box-sizing: border-box;';
+searchInputGroup.appendChild(searchInput); searchInputGroup.appendChild(clearButton);
+searchContainer.appendChild(searchInputGroup); searchContainer.appendChild(resultContainer);
+document.body.appendChild(searchContainer);
+searchInput.addEventListener('input', function () {
+    const query = this.value.toLowerCase(); resultContainer.innerHTML = '';
+    clearButton.style.display = query ? 'block' : 'none';
+    resultContainer.style.display = query ? 'block' : 'none';
+    if (query && kabupatenDataForSearch.length > 0) {
+        const filteredKab = kabupatenDataForSearch.filter(kabupaten => kabupaten.name.toLowerCase().includes(query));
+        if (filteredKab.length > 0) {
+            filteredKab.forEach(kabupaten => {
+                const li = document.createElement('li'); li.textContent = kabupaten.name;
+                li.style = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;';
+                li.onmouseover = function() { this.style.backgroundColor = '#f0f0f0'; };
+                li.onmouseout = function() { this.style.backgroundColor = 'white'; };
+                li.addEventListener('click', () => {
+                    if (!kabupaten.coords || typeof kabupaten.coords[0] === 'undefined' || typeof kabupaten.coords[1] === 'undefined') {
+                        console.error("Koordinat tidak valid untuk:", kabupaten.name, kabupaten.coords);
+                        return;
+                    }
+                    map.setView(kabupaten.coords, 10);
+                    const originalFeatureProperties = geojsonData.features.find(f => f.properties.WADMKK === kabupaten.name)?.properties;
+                    if (originalFeatureProperties) {
+                        const popupContentHtml = createPopupContent(originalFeatureProperties);
+                        L.popup({ maxWidth: 350 })
+                        .setLatLng(kabupaten.coords)
+                        .setContent(popupContentHtml)
+                        .openOn(map);
+                        showLayerPanel(originalFeatureProperties);
+                    }
+                    resultContainer.style.display = 'none'; searchInput.value = kabupaten.name; clearButton.style.display = 'block';
+                });
+                resultContainer.appendChild(li);
+            });
+        } else {
+            const noResultLi = document.createElement('li'); noResultLi.textContent = 'Tidak ada hasil ditemukan';
+            noResultLi.style = 'padding: 10px; color: grey; text-align: center;'; resultContainer.appendChild(noResultLi);
+        }
+    } else if (!query) {
+        resultContainer.style.display = 'none';
+    }
+});
+clearButton.addEventListener('click', function () {
+    searchInput.value = ''; resultContainer.innerHTML = '';
+    resultContainer.style.display = 'none'; clearButton.style.display = 'none'; searchInput.focus();
+});
+document.addEventListener('click', function(event) {
+    if (searchContainer && !searchContainer.contains(event.target) && resultContainer) {
+        resultContainer.style.display = 'none';
+    }
+});
+searchInput.addEventListener('focus', function() {
+    if (this.value && resultContainer && resultContainer.childNodes.length > 0) {
+        resultContainer.style.display = 'block';
+    }
+});
